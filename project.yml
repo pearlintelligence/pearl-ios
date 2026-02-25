@@ -1,0 +1,64 @@
+name: Pearl
+options:
+  bundleIdPrefix: com.innerpearl
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "15.0"
+  createIntermediateGroups: true
+  defaultConfig: Debug
+
+settings:
+  base:
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: "" # Set your Apple Developer Team ID here
+    SWIFT_VERSION: "5.9"
+    GENERATE_INFOPLIST_FILE: YES
+    INFOPLIST_KEY_CFBundleDisplayName: Pearl
+    INFOPLIST_KEY_LSApplicationCategoryType: "public.app-category.lifestyle"
+
+configs:
+  Debug: debug
+  Release: release
+
+targets:
+  Pearl:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - Pearl
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.innerpearl.pearl
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "Pearl uses your birth location to calculate your cosmic blueprint."
+        INFOPLIST_KEY_NSFaceIDUsageDescription: "Pearl uses Face ID to secure your account."
+        CODE_SIGN_ENTITLEMENTS: Pearl/Pearl.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+      configs:
+        Debug:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+        Release:
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: ""
+
+schemes:
+  Pearl:
+    build:
+      targets:
+        Pearl: all
+    run:
+      config: Debug
+      environmentVariables:
+        - variable: ANTHROPIC_API_KEY
+          value: ""
+          isEnabled: true
+    profile:
+      config: Release
+    archive:
+      config: Release

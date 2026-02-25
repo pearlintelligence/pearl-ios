@@ -62,9 +62,30 @@ Pearl/
 
 ## Setup
 
-1. Open in Xcode 15+
-2. Set `ANTHROPIC_API_KEY` in environment
-3. Build for iOS 17+ simulator or device
+### Quick Start (XcodeGen)
+```bash
+# 1. Install XcodeGen (one-time)
+brew install xcodegen
+
+# 2. Generate the Xcode project
+cd pearl-ios
+xcodegen generate
+
+# 3. Open in Xcode
+open Pearl.xcodeproj
+
+# 4. Set your Anthropic API key
+# Edit Scheme → Run → Environment Variables → ANTHROPIC_API_KEY
+
+# 5. Select iPhone 15 simulator → Hit ▶️ Run
+```
+
+### Manual Setup
+1. Open folder in Xcode 15+ → File → New → Project (iOS App, SwiftUI)
+2. Drag the `Pearl/` folder into the project
+3. Set deployment target to iOS 17.0
+4. Add `ANTHROPIC_API_KEY` to scheme environment variables
+5. Build & run on simulator or device
 
 ## Key Screens
 
