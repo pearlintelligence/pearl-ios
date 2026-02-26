@@ -122,8 +122,8 @@ class PearlEngine: ObservableObject {
         let (stream, _) = try await URLSession.shared.bytes(for: request)
         
         return AsyncStream { continuation in
-            Task {
-                var fullText = ""
+            Task { [weak self] in
+                var localText = ""
                 for try await line in stream.lines {
                     if line.hasPrefix("data: ") {
                         let jsonString = String(line.dropFirst(6))
@@ -133,9 +133,10 @@ class PearlEngine: ObservableObject {
                            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                            let delta = json["delta"] as? [String: Any],
                            let text = delta["text"] as? String {
-                            fullText += text
+                            localText += text
+                            let snapshot = localText
                             await MainActor.run {
-                                self.currentStreamedText = fullText
+                                self?.currentStreamedText = snapshot
                             }
                             continuation.yield(text)
                         }
@@ -143,7 +144,7 @@ class PearlEngine: ObservableObject {
                 }
                 
                 await MainActor.run {
-                    self.isGenerating = false
+                    self?.isGenerating = false
                 }
                 continuation.finish()
             }

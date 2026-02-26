@@ -207,7 +207,6 @@ class HumanDesignService {
     
     private func determineType(defined: Set<HDCenter>) -> HumanDesignType {
         let hasSacral = defined.contains(.sacral)
-        let hasThroat = defined.contains(.throat)
         let hasMotorToThroat = defined.contains(.throat) && 
             (defined.contains(.heart) || defined.contains(.solarPlexus) || defined.contains(.root))
         

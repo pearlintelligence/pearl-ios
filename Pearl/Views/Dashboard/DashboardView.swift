@@ -270,69 +270,96 @@ struct ZodiacWheelView: View {
             let radius = min(geometry.size.width, geometry.size.height) / 2 - 20
             
             ZStack {
-                // Outer zodiac ring
-                Circle()
-                    .stroke(PearlColors.gold.opacity(0.2), lineWidth: 1)
-                    .frame(width: radius * 2, height: radius * 2)
-                
-                // Inner ring
-                Circle()
-                    .stroke(PearlColors.gold.opacity(0.1), lineWidth: 0.5)
-                    .frame(width: radius * 1.4, height: radius * 1.4)
-                
-                // Sign divisions (12 segments)
-                ForEach(0..<12, id: \.self) { i in
-                    let angle = Double(i) * 30.0 - 90
-                    let radian = angle * .pi / 180
-                    
-                    // Division line
-                    Path { path in
-                        let inner = CGPoint(
-                            x: center.x + (radius * 0.7) * cos(radian),
-                            y: center.y + (radius * 0.7) * sin(radian)
-                        )
-                        let outer = CGPoint(
-                            x: center.x + radius * cos(radian),
-                            y: center.y + radius * sin(radian)
-                        )
-                        path.move(to: inner)
-                        path.addLine(to: outer)
-                    }
-                    .stroke(PearlColors.gold.opacity(0.1), lineWidth: 0.5)
-                    
-                    // Sign symbol
-                    let symbolAngle = (Double(i) * 30.0 + 15.0 - 90) * .pi / 180
-                    let symbolRadius = radius * 0.85
-                    Text(ZodiacSign.allCases[i].symbol)
-                        .font(.system(size: 14))
-                        .foregroundColor(PearlColors.gold.opacity(0.5))
-                        .position(
-                            x: center.x + symbolRadius * cos(symbolAngle),
-                            y: center.y + symbolRadius * sin(symbolAngle)
-                        )
-                }
-                
-                // Planet positions
-                ForEach(positions.prefix(10)) { position in
-                    let angle = (position.degree - 90) * .pi / 180
-                    let planetRadius = radius * 0.55
-                    
-                    Text(position.planet.symbol)
-                        .font(.system(size: 16))
-                        .foregroundColor(PearlColors.goldLight)
-                        .pearlGlow(color: PearlColors.gold, radius: 4)
-                        .position(
-                            x: center.x + planetRadius * cos(angle),
-                            y: center.y + planetRadius * sin(angle)
-                        )
-                }
-                
-                // Center
-                Text("✦")
-                    .font(.system(size: 16))
-                    .foregroundColor(PearlColors.gold.opacity(0.6))
-                    .position(center)
+                zodiacRings(radius: radius)
+                zodiacSegments(center: center, radius: radius)
+                planetMarkers(center: center, radius: radius)
+                centerDiamond(center: center)
             }
         }
+    }
+    
+    // MARK: - Sub-views
+    
+    private func zodiacRings(radius: CGFloat) -> some View {
+        ZStack {
+            Circle()
+                .stroke(PearlColors.gold.opacity(0.2), lineWidth: 1)
+                .frame(width: radius * 2, height: radius * 2)
+            Circle()
+                .stroke(PearlColors.gold.opacity(0.1), lineWidth: 0.5)
+                .frame(width: radius * 1.4, height: radius * 1.4)
+        }
+    }
+    
+    private func zodiacSegments(center: CGPoint, radius: CGFloat) -> some View {
+        ForEach(0..<12, id: \.self) { i in
+            ZodiacSegmentView(index: i, center: center, radius: radius)
+        }
+    }
+    
+    private func planetMarkers(center: CGPoint, radius: CGFloat) -> some View {
+        ForEach(positions.prefix(10)) { position in
+            let angle: Double = (position.degree - 90) * .pi / 180
+            let planetRadius: CGFloat = radius * 0.55
+            
+            Text(position.planet.symbol)
+                .font(.system(size: 16))
+                .foregroundColor(PearlColors.goldLight)
+                .pearlGlow(color: PearlColors.gold, radius: 4)
+                .position(
+                    x: center.x + planetRadius * cos(angle),
+                    y: center.y + planetRadius * sin(angle)
+                )
+        }
+    }
+    
+    private func centerDiamond(center: CGPoint) -> some View {
+        Text("✦")
+            .font(.system(size: 16))
+            .foregroundColor(PearlColors.gold.opacity(0.6))
+            .position(center)
+    }
+}
+
+// MARK: - Zodiac Segment (broken out for compiler performance)
+
+struct ZodiacSegmentView: View {
+    let index: Int
+    let center: CGPoint
+    let radius: CGFloat
+    
+    var body: some View {
+        let angle: Double = Double(index) * 30.0 - 90
+        let radian: Double = angle * .pi / 180
+        
+        ZStack {
+            Path { path in
+                let inner = CGPoint(
+                    x: center.x + (radius * 0.7) * cos(radian),
+                    y: center.y + (radius * 0.7) * sin(radian)
+                )
+                let outer = CGPoint(
+                    x: center.x + radius * cos(radian),
+                    y: center.y + radius * sin(radian)
+                )
+                path.move(to: inner)
+                path.addLine(to: outer)
+            }
+            .stroke(PearlColors.gold.opacity(0.1), lineWidth: 0.5)
+            
+            signSymbol
+        }
+    }
+    
+    private var signSymbol: some View {
+        let symbolAngle: Double = (Double(index) * 30.0 + 15.0 - 90) * .pi / 180
+        let symbolRadius: CGFloat = radius * 0.85
+        return Text(ZodiacSign.allCases[index].symbol)
+            .font(.system(size: 14))
+            .foregroundColor(PearlColors.gold.opacity(0.5))
+            .position(
+                x: center.x + symbolRadius * cos(symbolAngle),
+                y: center.y + symbolRadius * sin(symbolAngle)
+            )
     }
 }
