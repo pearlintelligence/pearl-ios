@@ -195,48 +195,12 @@ struct Aspect: Codable, Identifiable {
 // MARK: - Human Design Models
 
 struct HumanDesignProfile: Codable {
-    let type: HDType
+    let type: HumanDesignType
     let strategy: String
     let authority: String
     let profile: String
     let definedCenters: [HDCenter]
     let undefinedCenters: [HDCenter]
-    
-    enum HDType: String, Codable {
-        case generator = "Generator"
-        case manifestingGenerator = "Manifesting Generator"
-        case projector = "Projector"
-        case manifestor = "Manifestor"
-        case reflector = "Reflector"
-        
-        var description: String {
-            switch self {
-            case .generator: return "You are here to respond to life and find satisfaction through work you love."
-            case .manifestingGenerator: return "You are here to respond and then inform — a multi-passionate force of nature."
-            case .projector: return "You are here to guide others — your gift is seeing people deeply."
-            case .manifestor: return "You are here to initiate and catalyze — your energy shifts rooms."
-            case .reflector: return "You are here to mirror the health of your community — rare and wise."
-            }
-        }
-    }
-    
-    enum HDCenter: String, Codable, CaseIterable {
-        case head, ajna, throat, g, heart, sacral, solarPlexus, spleen, root
-        
-        var displayName: String {
-            switch self {
-            case .head: return "Head"
-            case .ajna: return "Ajna"
-            case .throat: return "Throat"
-            case .g: return "G Center"
-            case .heart: return "Heart"
-            case .sacral: return "Sacral"
-            case .solarPlexus: return "Solar Plexus"
-            case .spleen: return "Spleen"
-            case .root: return "Root"
-            }
-        }
-    }
 }
 
 // MARK: - Numerology Models

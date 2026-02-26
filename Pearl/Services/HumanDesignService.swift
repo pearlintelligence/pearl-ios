@@ -1,5 +1,35 @@
 import Foundation
 
+// MARK: - Human Design Type
+
+enum HumanDesignType: String, Codable, CaseIterable {
+    case generator = "Generator"
+    case manifestingGenerator = "Manifesting Generator"
+    case projector = "Projector"
+    case manifestor = "Manifestor"
+    case reflector = "Reflector"
+}
+
+// MARK: - Human Design Center
+
+enum HDCenter: String, Codable, CaseIterable {
+    case head, ajna, throat, g, heart, sacral, solarPlexus, spleen, root
+    
+    var displayName: String {
+        switch self {
+        case .head: return "Head"
+        case .ajna: return "Ajna"
+        case .throat: return "Throat"
+        case .g: return "G Center"
+        case .heart: return "Heart"
+        case .sacral: return "Sacral"
+        case .solarPlexus: return "Solar Plexus"
+        case .spleen: return "Spleen"
+        case .root: return "Root"
+        }
+    }
+}
+
 // MARK: - Human Design Service
 // Calculates Human Design type, strategy, authority, profile from birth data
 
