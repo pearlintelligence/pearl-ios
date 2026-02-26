@@ -95,11 +95,10 @@ struct ProfileView: View {
                         .font(PearlFonts.body(15))
                         .foregroundColor(PearlColors.textSecondary)
                     
-                    if let hd = blueprint.humanDesign {
-                        Text("\(hd.type.rawValue) · \(hd.profile)")
-                            .font(PearlFonts.body(14))
-                            .foregroundColor(PearlColors.textMuted)
-                    }
+                    let hd = blueprint.humanDesign
+                    Text("\(hd.type.rawValue) · \(hd.profile)")
+                        .font(PearlFonts.body(14))
+                        .foregroundColor(PearlColors.textMuted)
                 }
             }
         }
@@ -149,7 +148,7 @@ struct ProfileView: View {
                     SettingsRow(
                         icon: "mappin.circle.fill",
                         title: "Birth Location",
-                        detail: viewModel.userProfile?.birthLocation ?? "Not set"
+                        detail: viewModel.userProfile?.birthLocationName ?? "Not set"
                     ) {
                         // Navigate to edit
                     }
