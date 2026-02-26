@@ -85,7 +85,7 @@ struct ProfileView: View {
             // Name & sign
             VStack(spacing: 6) {
                 if let profile = viewModel.userProfile {
-                    Text(profile.displayName)
+                    Text(profile.name)
                         .font(PearlFonts.oracleSemiBold(22))
                         .foregroundColor(PearlColors.goldLight)
                 }
