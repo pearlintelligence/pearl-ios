@@ -39,7 +39,7 @@ struct MainTabView: View {
             
             InsightsView()
                 .tabItem {
-                    Label("Insights", systemImage: "eye.fill")
+                    Label("Insights", systemImage: "sun.and.horizon.fill")
                 }
                 .tag(AppState.Tab.insights)
             
@@ -50,5 +50,13 @@ struct MainTabView: View {
                 .tag(AppState.Tab.profile)
         }
         .tint(PearlColors.gold)
+        .onAppear {
+            // Style tab bar
+            let appearance = UITabBarAppearance()
+            appearance.configureWithOpaqueBackground()
+            appearance.backgroundColor = UIColor(PearlColors.void)
+            UITabBar.appearance().standardAppearance = appearance
+            UITabBar.appearance().scrollEdgeAppearance = appearance
+        }
     }
 }

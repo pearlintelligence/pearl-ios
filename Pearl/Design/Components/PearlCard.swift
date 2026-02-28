@@ -3,13 +3,20 @@ import SwiftUI
 // MARK: - Pearl Card
 
 struct PearlCard<Content: View>: View {
+    enum Style {
+        case standard
+        case wisdom
+    }
+    
     let content: Content
     var padding: CGFloat = 20
     var showBorder: Bool = true
+    var style: Style = .standard
     
-    init(padding: CGFloat = 20, showBorder: Bool = true, @ViewBuilder content: () -> Content) {
+    init(padding: CGFloat = 20, showBorder: Bool = true, style: Style = .standard, @ViewBuilder content: () -> Content) {
         self.padding = padding
         self.showBorder = showBorder
+        self.style = style
         self.content = content()
     }
     
@@ -18,16 +25,30 @@ struct PearlCard<Content: View>: View {
             .padding(padding)
             .background(
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(PearlColors.surface.opacity(0.6))
+                    .fill(backgroundColor)
                     .overlay(
                         Group {
                             if showBorder {
                                 RoundedRectangle(cornerRadius: 20)
-                                    .stroke(PearlColors.gold.opacity(0.1), lineWidth: 0.5)
+                                    .stroke(borderColor, lineWidth: style == .wisdom ? 1 : 0.5)
                             }
                         }
                     )
             )
+    }
+    
+    private var backgroundColor: Color {
+        switch style {
+        case .standard: return PearlColors.surface.opacity(0.6)
+        case .wisdom: return PearlColors.gold.opacity(0.06)
+        }
+    }
+    
+    private var borderColor: Color {
+        switch style {
+        case .standard: return PearlColors.gold.opacity(0.1)
+        case .wisdom: return PearlColors.gold.opacity(0.2)
+        }
     }
 }
 

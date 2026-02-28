@@ -34,6 +34,9 @@ enum AppConfig {
         "claude-sonnet-4-20250514" // or claude-3-5-haiku for faster responses
     }
     
+    // Alias for convenience
+    static var claudeModel: String { anthropicModel }
+    
     // MARK: - API Endpoints
     
     static var anthropicBaseURL: String {
@@ -51,8 +54,8 @@ enum AppConfig {
     
     static var enableHumanDesign: Bool { true }
     static var enableNumerology: Bool { true }
-    static var enableGeneKeys: Bool { false } // Phase 2
-    static var enableKabbalah: Bool { false }  // Phase 2
+    static var enableGeneKeys: Bool { true }  // Enabled for P0
+    static var enableKabbalah: Bool { true }   // Enabled for P0
     
     // MARK: - Premium
     

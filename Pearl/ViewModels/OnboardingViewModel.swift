@@ -7,6 +7,7 @@ import Combine
 @MainActor
 class OnboardingViewModel: ObservableObject {
     @Published var currentStep: OnboardingStep = .welcome
+    @Published var userName: String = ""
     @Published var birthDate: Date = Calendar.current.date(byAdding: .year, value: -25, to: Date()) ?? Date()
     @Published var birthTime: Date = Date()
     @Published var knowsBirthTime: Bool = true
@@ -14,15 +15,25 @@ class OnboardingViewModel: ObservableObject {
     @Published var locationResults: [String] = []
     @Published var firstReading: String = ""
     @Published var isGenerating: Bool = false
+    @Published var generatingPhase: GeneratingPhase = .stars
     
     // Location data
     var birthLatitude: Double = 0
     var birthLongitude: Double = 0
     
+    // Services
     private let locationSearcher = MKLocalSearchCompleter()
-    private let astrologyService = AstrologyService()
-    private var searchCancellable: AnyCancellable?
     private var locationDelegate: LocationSearchDelegate?
+    
+    enum GeneratingPhase: String {
+        case stars = "Reading the stars..."
+        case fingerprint = "Mapping your cosmic fingerprint..."
+        case humanDesign = "Decoding your Human Design..."
+        case geneKeys = "Activating your Gene Keys..."
+        case kabbalah = "Consulting the Tree of Life..."
+        case numerology = "Calculating your sacred numbers..."
+        case synthesis = "Pearl is seeing you for the first time..."
+    }
     
     init() {
         setupLocationSearch()
@@ -30,9 +41,23 @@ class OnboardingViewModel: ObservableObject {
     
     // MARK: - Navigation
     
+    var canAdvance: Bool {
+        switch currentStep {
+        case .welcome: return true
+        case .name: return !userName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case .birthDate: return true
+        case .birthTime: return true
+        case .birthLocation: return selectedLocation != nil
+        case .generating: return false
+        case .firstReading: return true
+        }
+    }
+    
     func advance() {
         switch currentStep {
         case .welcome:
+            currentStep = .name
+        case .name:
             currentStep = .birthDate
         case .birthDate:
             currentStep = .birthTime
@@ -44,6 +69,18 @@ class OnboardingViewModel: ObservableObject {
             currentStep = .firstReading
         case .firstReading:
             break
+        }
+    }
+    
+    func goBack() {
+        switch currentStep {
+        case .welcome: break
+        case .name: currentStep = .welcome
+        case .birthDate: currentStep = .name
+        case .birthTime: currentStep = .birthDate
+        case .birthLocation: currentStep = .birthTime
+        case .generating: break
+        case .firstReading: break
         }
     }
     
@@ -85,65 +122,83 @@ class OnboardingViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Blueprint Generation
+    // MARK: - Five-System Blueprint Generation
     
     func generateBlueprint() async {
         isGenerating = true
         
         do {
-            // Calculate natal chart
-            let natalChart = try await astrologyService.calculateNatalChart(
-                date: birthDate,
-                time: knowsBirthTime ? birthTime : nil,
+            // Phase 1: Astrology
+            generatingPhase = .stars
+            try await Task.sleep(nanoseconds: 600_000_000)
+            
+            // Phase 2: Fingerprint
+            generatingPhase = .fingerprint
+            
+            // Build the full five-system fingerprint
+            let builder = CosmicFingerprintBuilder()
+            let fingerprint = try await builder.build(
+                name: userName,
+                birthDate: birthDate,
+                birthTime: knowsBirthTime ? birthTime : nil,
                 latitude: birthLatitude,
                 longitude: birthLongitude
             )
             
-            // Build blueprint (simplified for prototype)
-            let blueprint = CosmicBlueprint(
-                id: UUID(),
-                userId: UUID(),
-                generatedAt: Date(),
-                sunSign: natalChart.sunSign,
-                moonSign: natalChart.moonSign,
-                risingSign: natalChart.risingSign,
-                planetaryPositions: natalChart.planets,
-                houses: natalChart.houses,
-                aspects: natalChart.aspects,
-                humanDesign: HumanDesignProfile(
-                    type: .generator,  // Placeholder — full HD calculation needed
-                    strategy: "Wait to Respond",
-                    authority: "Sacral",
-                    profile: "3/5",
-                    definedCenters: [.sacral, .root, .solarPlexus],
-                    undefinedCenters: [.head, .ajna, .throat, .g, .heart, .spleen]
-                ),
+            // Phase 3-6: Show progress through each system
+            generatingPhase = .humanDesign
+            try await Task.sleep(nanoseconds: 500_000_000)
+            
+            generatingPhase = .geneKeys
+            try await Task.sleep(nanoseconds: 500_000_000)
+            
+            generatingPhase = .kabbalah
+            try await Task.sleep(nanoseconds: 500_000_000)
+            
+            generatingPhase = .numerology
+            try await Task.sleep(nanoseconds: 500_000_000)
+            
+            // Store fingerprint
+            FingerprintStore.shared.currentFingerprint = fingerprint
+            
+            // Also create legacy blueprint for backward compatibility
+            let legacyBlueprint = CosmicBlueprint(
+                id: fingerprint.id,
+                userId: fingerprint.userId,
+                generatedAt: fingerprint.generatedAt,
+                sunSign: fingerprint.astrology.sunSign,
+                moonSign: fingerprint.astrology.moonSign,
+                risingSign: fingerprint.astrology.risingSign,
+                planetaryPositions: fingerprint.astrology.planetaryPositions,
+                houses: fingerprint.astrology.houses,
+                aspects: fingerprint.astrology.aspects,
+                humanDesign: fingerprint.humanDesign,
                 numerology: NumerologyProfile(
-                    lifePath: calculateLifePath(from: birthDate),
-                    lifePathDescription: "",
-                    expressionNumber: nil,
-                    soulUrgeNumber: nil
+                    lifePath: fingerprint.numerology.lifePath.value,
+                    lifePathDescription: fingerprint.numerology.lifePath.meaning,
+                    expressionNumber: fingerprint.numerology.expression.value,
+                    soulUrgeNumber: fingerprint.numerology.soulUrge.value
                 ),
-                pearlSummary: "",
-                coreThemes: [],
-                lifePurpose: ""
+                pearlSummary: fingerprint.synthesis.pearlSummary,
+                coreThemes: fingerprint.synthesis.coreThemes,
+                lifePurpose: fingerprint.synthesis.lifePurpose
             )
+            BlueprintStore.shared.currentBlueprint = legacyBlueprint
             
-            // Store blueprint
-            BlueprintStore.shared.currentBlueprint = blueprint
+            // Phase 7: Generate first reading
+            generatingPhase = .synthesis
             
-            // Generate Pearl's first reading
             let engine = PearlEngine()
-            let reading = try await engine.generateFirstReading(blueprint: blueprint)
+            let reading = try await engine.generateFirstReading(blueprint: legacyBlueprint)
             
             self.firstReading = reading
             self.isGenerating = false
             self.advance() // Move to first reading step
             
         } catch {
-            // Fallback reading if API fails
+            // Fallback reading if anything fails
             self.firstReading = """
-            ✦ I see you.
+            ✦ I see you, \(userName).
             
             Even before the stars spelled your name, the cosmos held a space for exactly who you are. \
             Your chart tells a story of depth and searching — a soul that has always known there is more \
@@ -158,27 +213,6 @@ class OnboardingViewModel: ObservableObject {
             self.isGenerating = false
             self.advance()
         }
-    }
-    
-    // MARK: - Numerology Helper
-    
-    private func calculateLifePath(from date: Date) -> Int {
-        let calendar = Calendar.current
-        let components = calendar.dateComponents([.year, .month, .day], from: date)
-        
-        func reduceToSingle(_ n: Int) -> Int {
-            var num = n
-            while num > 9 && num != 11 && num != 22 && num != 33 {
-                num = String(num).compactMap { $0.wholeNumberValue }.reduce(0, +)
-            }
-            return num
-        }
-        
-        let monthReduced = reduceToSingle(components.month!)
-        let dayReduced = reduceToSingle(components.day!)
-        let yearReduced = reduceToSingle(components.year!)
-        
-        return reduceToSingle(monthReduced + dayReduced + yearReduced)
     }
 }
 
@@ -200,7 +234,17 @@ class LocationSearchDelegate: NSObject, MKLocalSearchCompleterDelegate {
     }
 }
 
-// MARK: - Blueprint Store (Singleton)
+// MARK: - Fingerprint Store (Singleton)
+
+class FingerprintStore {
+    static let shared = FingerprintStore()
+    var currentFingerprint: CosmicFingerprint?
+    var userName: String = ""
+    
+    private init() {}
+}
+
+// MARK: - Blueprint Store (Singleton - Legacy)
 
 class BlueprintStore {
     static let shared = BlueprintStore()
