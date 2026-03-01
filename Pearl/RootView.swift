@@ -39,7 +39,7 @@ struct MainTabView: View {
             
             InsightsView()
                 .tabItem {
-                    Label("Insights", systemImage: "eye.fill")
+                    Label("Insights", systemImage: "sun.and.horizon.fill")
                 }
                 .tag(AppState.Tab.insights)
             
@@ -50,5 +50,25 @@ struct MainTabView: View {
                 .tag(AppState.Tab.profile)
         }
         .tint(PearlColors.gold)
+        .onChange(of: appState.currentTab) { _, newTab in
+            let screenName: String
+            switch newTab {
+            case .dashboard: screenName = "Dashboard"
+            case .chat: screenName = "Chat"
+            case .insights: screenName = "Insights"
+            case .profile: screenName = "Profile"
+            }
+            CrashReporting.trackScreen(screenName)
+        }
+        .onAppear {
+            CrashReporting.trackScreen("Dashboard") // Default tab
+            
+            // Style tab bar
+            let appearance = UITabBarAppearance()
+            appearance.configureWithOpaqueBackground()
+            appearance.backgroundColor = UIColor(PearlColors.void)
+            UITabBar.appearance().standardAppearance = appearance
+            UITabBar.appearance().scrollEdgeAppearance = appearance
+        }
     }
 }

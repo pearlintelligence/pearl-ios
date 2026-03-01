@@ -2,9 +2,11 @@ import SwiftUI
 
 // MARK: - Chat View
 // Conversational Q&A with Pearl — the core interaction
+// Voice input (speech-to-text) + voice output (text-to-speech)
 
 struct ChatView: View {
     @StateObject private var viewModel = ChatViewModel()
+    @StateObject private var speech = SpeechService()
     @FocusState private var isInputFocused: Bool
     @Namespace private var bottomID
     
@@ -24,7 +26,7 @@ struct ChatView: View {
                                 }
                                 
                                 ForEach(viewModel.messages) { message in
-                                    ChatBubble(message: message)
+                                    ChatBubble(message: message, speech: speech)
                                         .id(message.id)
                                 }
                                 
@@ -57,6 +59,11 @@ struct ChatView: View {
                         }
                     }
                     
+                    // Listening indicator
+                    if speech.isListening {
+                        listeningBanner
+                    }
+                    
                     // Input bar
                     chatInputBar
                 }
@@ -77,6 +84,10 @@ struct ChatView: View {
                             Text("speaking...")
                                 .font(PearlFonts.caption)
                                 .foregroundColor(PearlColors.textMuted)
+                        } else if speech.isSpeaking {
+                            Text("reading aloud...")
+                                .font(PearlFonts.caption)
+                                .foregroundColor(PearlColors.gold.opacity(0.6))
                         }
                     }
                 }
@@ -92,6 +103,60 @@ struct ChatView: View {
                 }
             }
         }
+        // Sync speech transcript into input
+        .onChange(of: speech.transcript) { _, newValue in
+            if !newValue.isEmpty {
+                viewModel.inputText = newValue
+            }
+        }
+        .onChange(of: speech.interimTranscript) { _, newValue in
+            if speech.isListening && !newValue.isEmpty {
+                viewModel.inputText = newValue
+            }
+        }
+    }
+    
+    // MARK: - Listening Banner
+    
+    private var listeningBanner: some View {
+        HStack(spacing: 8) {
+            // Pulsing red dot
+            ZStack {
+                Circle()
+                    .fill(Color.red.opacity(0.3))
+                    .frame(width: 12, height: 12)
+                    .scaleEffect(1.5)
+                    .opacity(0.5)
+                    .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: speech.isListening)
+                
+                Circle()
+                    .fill(Color.red)
+                    .frame(width: 8, height: 8)
+            }
+            
+            Text("Listening... speak your question")
+                .font(PearlFonts.body(12))
+                .foregroundColor(PearlColors.gold.opacity(0.7))
+            
+            if !speech.interimTranscript.isEmpty {
+                Text(speech.interimTranscript)
+                    .font(PearlFonts.body(11))
+                    .foregroundColor(PearlColors.textMuted)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
+            
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(PearlColors.surface.opacity(0.6))
+        .overlay(
+            Rectangle()
+                .fill(PearlColors.gold.opacity(0.1))
+                .frame(height: 0.5),
+            alignment: .top
+        )
     }
     
     // MARK: - Chat Welcome
@@ -116,13 +181,22 @@ struct ChatView: View {
                 .lineSpacing(4)
                 .padding(.horizontal, 20)
             
-            // Suggestion chips
+            if speech.speechPermissionGranted {
+                Text("✦ You can also tap the mic to speak your question")
+                    .font(PearlFonts.body(12))
+                    .foregroundColor(PearlColors.gold.opacity(0.5))
+            }
+            
+            // Suggestion chips — matching web app
             VStack(spacing: 10) {
-                SuggestionChip("What does my chart say about my purpose?") {
-                    viewModel.sendMessage("What does my chart say about my purpose?")
+                SuggestionChip("Should I take this new opportunity?") {
+                    viewModel.sendMessage("Should I take this new opportunity?")
                 }
-                SuggestionChip("Tell me about my Human Design type") {
-                    viewModel.sendMessage("Tell me about my Human Design type")
+                SuggestionChip("What is my biggest gift to the world?") {
+                    viewModel.sendMessage("What is my biggest gift to the world?")
+                }
+                SuggestionChip("Why do I keep repeating this pattern?") {
+                    viewModel.sendMessage("Why do I keep repeating this pattern?")
                 }
                 SuggestionChip("What should I focus on this week?") {
                     viewModel.sendMessage("What should I focus on this week?")
@@ -141,7 +215,40 @@ struct ChatView: View {
             Divider()
                 .background(PearlColors.surface)
             
-            HStack(alignment: .bottom, spacing: 12) {
+            HStack(alignment: .bottom, spacing: 10) {
+                // Mic button (voice input)
+                if speech.speechPermissionGranted {
+                    Button {
+                        let impact = UIImpactFeedbackGenerator(style: .medium)
+                        impact.impactOccurred()
+                        
+                        // Stop TTS if playing
+                        if speech.isSpeaking { speech.stopSpeaking() }
+                        
+                        speech.toggleListening()
+                    } label: {
+                        Image(systemName: speech.isListening ? "mic.slash.fill" : "mic.fill")
+                            .font(.system(size: 18))
+                            .foregroundColor(speech.isListening ? Color.red : PearlColors.textMuted.opacity(0.5))
+                            .frame(width: 36, height: 36)
+                            .background(
+                                Circle()
+                                    .fill(speech.isListening
+                                        ? Color.red.opacity(0.15)
+                                        : PearlColors.gold.opacity(0.05))
+                                    .overlay(
+                                        Circle()
+                                            .stroke(
+                                                speech.isListening
+                                                    ? Color.red.opacity(0.3)
+                                                    : Color.clear,
+                                                lineWidth: 1
+                                            )
+                                    )
+                            )
+                    }
+                }
+                
                 // Text input
                 TextField("Ask Pearl...", text: $viewModel.inputText, axis: .vertical)
                     .font(PearlFonts.bodyRegular)
@@ -166,6 +273,10 @@ struct ChatView: View {
                 Button {
                     let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                     impactFeedback.impactOccurred()
+                    
+                    // Stop listening if active
+                    if speech.isListening { speech.stopListening() }
+                    
                     viewModel.sendMessage(viewModel.inputText)
                 } label: {
                     Image(systemName: "arrow.up.circle.fill")
@@ -189,6 +300,11 @@ struct ChatView: View {
 
 struct ChatBubble: View {
     let message: ChatMessage
+    @ObservedObject var speech: SpeechService
+    
+    private var isThisPlaying: Bool {
+        speech.isSpeaking && speech.speakingMessageId == message.id.uuidString
+    }
     
     var body: some View {
         HStack {
@@ -205,6 +321,28 @@ struct ChatBubble: View {
                         Text("Pearl")
                             .font(PearlFonts.labelText)
                             .foregroundColor(PearlColors.gold)
+                        
+                        Spacer()
+                        
+                        // TTS button — listen to Pearl's response
+                        Button {
+                            speech.toggleSpeak(message.content, messageId: message.id.uuidString)
+                        } label: {
+                            Image(systemName: isThisPlaying ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                                .font(.system(size: 12))
+                                .foregroundColor(
+                                    isThisPlaying
+                                        ? PearlColors.gold
+                                        : PearlColors.textMuted.opacity(0.4)
+                                )
+                                .padding(6)
+                                .background(
+                                    Circle()
+                                        .fill(isThisPlaying
+                                            ? PearlColors.gold.opacity(0.1)
+                                            : Color.clear)
+                                )
+                        }
                     }
                 }
                 

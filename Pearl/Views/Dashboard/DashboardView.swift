@@ -1,11 +1,15 @@
 import SwiftUI
 
 // MARK: - Dashboard View
-// The user's cosmic blueprint — their personal home screen
+// Cosmic Fingerprint — the unified four-system profile dashboard
 
 struct DashboardView: View {
     @StateObject private var viewModel = DashboardViewModel()
-    @State private var expandedWisdom: String? = nil
+    @State private var expandedSection: DashboardSection? = nil
+    
+    enum DashboardSection: String {
+        case astrology, humanDesign, kabbalah, numerology
+    }
     
     var body: some View {
         NavigationStack {
@@ -14,22 +18,27 @@ struct DashboardView: View {
                 
                 ScrollView {
                     VStack(spacing: 24) {
-                        // Header
-                        headerSection
+                        // Greeting header
+                        greetingHeader
                         
-                        // Weekly Insight (if available)
-                        if let insight = viewModel.currentInsight {
-                            weeklyInsightCard(insight)
+                        // Life Purpose card (CORE — most important)
+                        if let purpose = viewModel.fingerprint?.lifePurpose {
+                            NavigationLink {
+                                LifePurposeView(
+                                    purpose: purpose,
+                                    userName: FingerprintStore.shared.userName ?? "Seeker"
+                                )
+                            } label: {
+                                LifePurposeCard(purpose: purpose, onTap: {})
+                            }
+                            .buttonStyle(.plain)
                         }
                         
-                        // Cosmic Blueprint
-                        blueprintSection
+                        // Morning Cosmic Brief card (label: "What's Happening Now")
+                        morningBriefCard
                         
-                        // Human Design
-                        humanDesignSection
-                        
-                        // Wisdom Traditions
-                        wisdomSection
+                        // Four-System Fingerprint (label: "Your Blueprint")
+                        cosmicBlueprintSection
                         
                         Spacer(minLength: 100)
                     }
@@ -57,99 +66,184 @@ struct DashboardView: View {
         }
     }
     
-    // MARK: - Header Section
+    // MARK: - Greeting Header
     
-    private var headerSection: some View {
+    private var greetingHeader: some View {
         VStack(spacing: 8) {
-            Text("Your Cosmic Blueprint")
+            let name = FingerprintStore.shared.userName
+            Text(viewModel.greeting + (name.isEmpty ? "" : ", \(name)"))
                 .font(PearlFonts.screenTitle)
                 .foregroundColor(PearlColors.goldLight)
             
-            if let blueprint = viewModel.blueprint {
-                Text("\(blueprint.sunSign.symbol) \(blueprint.sunSign.displayName) Sun · \(blueprint.moonSign.symbol) \(blueprint.moonSign.displayName) Moon")
+            if let fingerprint = viewModel.fingerprint {
+                let sun = fingerprint.astrology.sunSign
+                let moon = fingerprint.astrology.moonSign
+                Text("\(sun.symbol) \(sun.displayName) Sun · \(moon.symbol) \(moon.displayName) Moon")
                     .font(PearlFonts.body(15))
                     .foregroundColor(PearlColors.textSecondary)
                 
-                if let rising = blueprint.risingSign {
+                if let rising = fingerprint.astrology.risingSign {
                     Text("\(rising.symbol) \(rising.displayName) Rising")
                         .font(PearlFonts.body(14))
                         .foregroundColor(PearlColors.textMuted)
                 }
+            } else if let blueprint = viewModel.legacyBlueprint {
+                Text("\(blueprint.sunSign.symbol) \(blueprint.sunSign.displayName) Sun · \(blueprint.moonSign.symbol) \(blueprint.moonSign.displayName) Moon")
+                    .font(PearlFonts.body(15))
+                    .foregroundColor(PearlColors.textSecondary)
             }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
     }
     
-    // MARK: - Weekly Insight Card
+    // MARK: - Morning Cosmic Brief
     
-    private func weeklyInsightCard(_ insight: WeeklyInsight) -> some View {
-        NavigationLink {
-            InsightDetailView(insight: insight)
-        } label: {
-            InsightCard(
-                date: "This Week",
-                title: insight.title,
-                preview: insight.content,
-                isNew: !insight.isRead
-            )
+    private var morningBriefCard: some View {
+        Group {
+            if let brief = viewModel.morningBrief {
+                NavigationLink {
+                    MorningBriefDetailView(brief: brief)
+                } label: {
+                    PearlCard {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Text("☉")
+                                    .font(.system(size: 20))
+                                Text("What's Happening Now")
+                                    .font(PearlFonts.cardTitle)
+                                    .foregroundColor(PearlColors.goldLight)
+                                Spacer()
+                                Text("NEW")
+                                    .font(PearlFonts.caption)
+                                    .foregroundColor(PearlColors.gold)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 2)
+                                    .background(
+                                        Capsule()
+                                            .fill(PearlColors.gold.opacity(0.15))
+                                    )
+                            }
+                            
+                            Text(brief.greeting)
+                                .font(PearlFonts.pearlWhisper)
+                                .foregroundColor(PearlColors.goldLight)
+                                .lineSpacing(4)
+                                .lineLimit(3)
+                            
+                            HStack {
+                                DiamondSymbol(size: 8)
+                                Text("Tap to read your full brief")
+                                    .font(PearlFonts.caption)
+                                    .foregroundColor(PearlColors.textMuted)
+                            }
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+            } else {
+                // Generate brief button
+                PearlCard {
+                    VStack(spacing: 16) {
+                        Image(systemName: "sun.and.horizon.fill")
+                            .font(.system(size: 28))
+                            .foregroundColor(PearlColors.gold.opacity(0.6))
+                        
+                        Text("What's Happening Now")
+                            .font(PearlFonts.cardTitle)
+                            .foregroundColor(PearlColors.goldLight)
+                        
+                        Text("Pearl reads the sky each morning and whispers what it means for you.")
+                            .font(PearlFonts.pearlWhisper)
+                            .foregroundColor(PearlColors.textSecondary)
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(4)
+                        
+                        PearlSecondaryButton("Generate Today's Brief", icon: "sparkles") {
+                            Task { await viewModel.generateMorningBrief() }
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                }
+            }
         }
-        .buttonStyle(.plain)
     }
     
-    // MARK: - Blueprint Section
+    // MARK: - Cosmic Blueprint Section (Four Systems)
     
-    private var blueprintSection: some View {
-        PearlCard {
-            VStack(spacing: 16) {
-                HStack {
-                    Text("Planetary Positions")
-                        .font(PearlFonts.cardTitle)
-                        .foregroundColor(PearlColors.goldLight)
-                    Spacer()
-                    DiamondSymbol(size: 10)
-                }
-                
-                if let blueprint = viewModel.blueprint {
-                    // Zodiac wheel placeholder
-                    ZodiacWheelView(positions: blueprint.planetaryPositions)
+    private var cosmicBlueprintSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Your Blueprint")
+                .font(PearlFonts.sectionTitle)
+                .foregroundColor(PearlColors.goldLight)
+                .padding(.leading, 4)
+            
+            Text("Four ancient traditions, one unified portrait")
+                .font(PearlFonts.pearlWhisper)
+                .foregroundColor(PearlColors.textMuted)
+                .padding(.leading, 4)
+            
+            // 1. Western Astrology
+            astrologyCard
+            
+            // 2. Human Design
+            humanDesignCard
+            
+            // 3. Kabbalah
+            kabbalahCard
+            
+            // 5. Numerology
+            numerologyCard
+        }
+    }
+    
+    // MARK: - 1. Astrology Card
+    
+    private var astrologyCard: some View {
+        SystemCard(
+            title: "Western Astrology",
+            symbol: "☉",
+            color: PearlColors.stardust,
+            isExpanded: expandedSection == .astrology,
+            onTap: { toggleSection(.astrology) }
+        ) {
+            if let fp = viewModel.fingerprint {
+                VStack(spacing: 16) {
+                    // Zodiac wheel
+                    ZodiacWheelView(positions: fp.astrology.planetaryPositions)
                         .frame(height: 220)
                     
-                    // Planet list
-                    VStack(spacing: 8) {
-                        ForEach(blueprint.planetaryPositions) { position in
+                    // Big three
+                    HStack(spacing: 0) {
+                        bigThreeItem("Sun", fp.astrology.sunSign)
+                        bigThreeItem("Moon", fp.astrology.moonSign)
+                        if let rising = fp.astrology.risingSign {
+                            bigThreeItem("Rising", rising)
+                        }
+                    }
+                    
+                    // Planets
+                    VStack(spacing: 6) {
+                        ForEach(fp.astrology.planetaryPositions) { pos in
                             HStack {
-                                Text(position.planet.symbol)
-                                    .font(.system(size: 18))
-                                    .frame(width: 28)
-                                
-                                Text(position.planet.displayName)
-                                    .font(PearlFonts.bodyMedium(14))
+                                Text(pos.planet.symbol)
+                                    .font(.system(size: 16))
+                                    .frame(width: 24)
+                                Text(pos.planet.displayName)
+                                    .font(PearlFonts.bodyMedium(13))
                                     .foregroundColor(PearlColors.textPrimary)
-                                
                                 Spacer()
-                                
-                                Text("\(position.sign.symbol) \(position.sign.displayName)")
-                                    .font(PearlFonts.body(14))
+                                Text("\(pos.sign.symbol) \(pos.sign.displayName)")
+                                    .font(PearlFonts.body(13))
                                     .foregroundColor(PearlColors.textSecondary)
-                                
-                                Text(String(format: "%.1f°", position.degree.truncatingRemainder(dividingBy: 30)))
-                                    .font(PearlFonts.body(12))
-                                    .foregroundColor(PearlColors.textMuted)
-                                    .frame(width: 40, alignment: .trailing)
-                                
-                                if position.isRetrograde {
+                                if pos.isRetrograde {
                                     Text("℞")
-                                        .font(.system(size: 12))
+                                        .font(.system(size: 11))
                                         .foregroundColor(PearlColors.warning)
                                 }
                             }
-                            .padding(.vertical, 4)
-                            
-                            if position.planet != .pluto {
-                                Divider()
-                                    .background(PearlColors.surface)
-                            }
+                            .padding(.vertical, 2)
                         }
                     }
                 }
@@ -157,27 +251,38 @@ struct DashboardView: View {
         }
     }
     
-    // MARK: - Human Design Section
+    private func bigThreeItem(_ label: String, _ sign: ZodiacSign) -> some View {
+        VStack(spacing: 4) {
+            Text(sign.symbol)
+                .font(.system(size: 28))
+            Text(sign.displayName)
+                .font(PearlFonts.bodyMedium(13))
+                .foregroundColor(PearlColors.goldLight)
+            Text(label)
+                .font(PearlFonts.caption)
+                .foregroundColor(PearlColors.textMuted)
+        }
+        .frame(maxWidth: .infinity)
+    }
     
-    private var humanDesignSection: some View {
-        PearlCard {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack {
-                    Text("Human Design")
-                        .font(PearlFonts.cardTitle)
-                        .foregroundColor(PearlColors.goldLight)
-                    Spacer()
-                    Text("◈")
+    // MARK: - 2. Human Design Card
+    
+    private var humanDesignCard: some View {
+        let hd = viewModel.fingerprint?.humanDesign ?? viewModel.legacyBlueprint?.humanDesign
+        
+        return SystemCard(
+            title: "Human Design",
+            symbol: "◈",
+            color: PearlColors.cosmic,
+            isExpanded: expandedSection == .humanDesign,
+            onTap: { toggleSection(.humanDesign) }
+        ) {
+            if let hd = hd {
+                VStack(alignment: .leading, spacing: 16) {
+                    // Type
+                    Text(hd.type.rawValue)
+                        .font(PearlFonts.oracleSemiBold(24))
                         .foregroundColor(PearlColors.gold)
-                }
-                
-                if let hd = viewModel.blueprint?.humanDesign {
-                    // Type badge
-                    HStack {
-                        Text(hd.type.rawValue)
-                            .font(PearlFonts.oracleSemiBold(22))
-                            .foregroundColor(PearlColors.gold)
-                    }
                     
                     Text(hd.type.description)
                         .font(PearlFonts.pearlWhisper)
@@ -186,57 +291,277 @@ struct DashboardView: View {
                     
                     Divider().background(PearlColors.surface)
                     
-                    // Details grid
-                    LazyVGrid(columns: [
-                        GridItem(.flexible()),
-                        GridItem(.flexible())
-                    ], spacing: 16) {
+                    // Details
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
                         HDDetailCell(label: "Strategy", value: hd.strategy)
                         HDDetailCell(label: "Authority", value: hd.authority)
                         HDDetailCell(label: "Profile", value: hd.profile)
                         HDDetailCell(label: "Defined Centers", value: "\(hd.definedCenters.count)/9")
+                    }
+                    
+                    // Centers visualization
+                    HStack(spacing: 4) {
+                        ForEach(HDCenter.allCases, id: \.self) { center in
+                            VStack(spacing: 2) {
+                                Circle()
+                                    .fill(hd.definedCenters.contains(center) ? PearlColors.gold : PearlColors.surface)
+                                    .frame(width: 28, height: 28)
+                                    .overlay(
+                                        Circle()
+                                            .stroke(PearlColors.gold.opacity(0.3), lineWidth: 0.5)
+                                    )
+                                Text(center.displayName.prefix(3))
+                                    .font(PearlFonts.body(8))
+                                    .foregroundColor(PearlColors.textMuted)
+                            }
+                        }
                     }
                 }
             }
         }
     }
     
-    // MARK: - Wisdom Section
+    // MARK: - 3. Kabbalah Card
     
-    private var wisdomSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Wisdom Traditions")
-                .font(PearlFonts.sectionTitle)
-                .foregroundColor(PearlColors.goldLight)
-                .padding(.leading, 4)
-            
-            ForEach(wisdomTraditions, id: \.title) { tradition in
-                WisdomCard(
-                    title: tradition.title,
-                    symbol: tradition.symbol,
-                    description: tradition.description,
-                    color: tradition.color,
-                    isExpanded: expandedWisdom == tradition.title,
-                    onTap: {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            expandedWisdom = expandedWisdom == tradition.title ? nil : tradition.title
-                        }
+    private var kabbalahCard: some View {
+        SystemCard(
+            title: "Kabbalah",
+            symbol: "✡",
+            color: PearlColors.gold,
+            isExpanded: expandedSection == .kabbalah,
+            onTap: { toggleSection(.kabbalah) }
+        ) {
+            if let kb = viewModel.fingerprint?.kabbalah {
+                VStack(alignment: .leading, spacing: 16) {
+                    // Soul Correction
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Soul Correction")
+                            .font(PearlFonts.labelText)
+                            .foregroundColor(PearlColors.textMuted)
+                        Text("#\(kb.soulCorrection.number) — \(kb.soulCorrection.name)")
+                            .font(PearlFonts.oracleSemiBold(20))
+                            .foregroundColor(PearlColors.gold)
+                        Text(kb.soulCorrection.description)
+                            .font(PearlFonts.pearlWhisper)
+                            .foregroundColor(PearlColors.textSecondary)
+                            .lineSpacing(4)
                     }
-                )
+                    
+                    Divider().background(PearlColors.surface)
+                    
+                    // Birth Sephirah
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Birth Sephirah")
+                            .font(PearlFonts.labelText)
+                            .foregroundColor(PearlColors.textMuted)
+                        HStack(spacing: 8) {
+                            Text(kb.birthSephirah.hebrewName)
+                                .font(.system(size: 20))
+                            Text("\(kb.birthSephirah.name) — \(kb.birthSephirah.meaning)")
+                                .font(PearlFonts.bodyMedium(15))
+                                .foregroundColor(PearlColors.goldLight)
+                        }
+                        Text(kb.birthSephirah.quality)
+                            .font(PearlFonts.body(14))
+                            .foregroundColor(PearlColors.textSecondary)
+                            .lineSpacing(3)
+                    }
+                    
+                    Divider().background(PearlColors.surface)
+                    
+                    // Tikkun Path
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Tikkun Path")
+                            .font(PearlFonts.labelText)
+                            .foregroundColor(PearlColors.textMuted)
+                        Text(kb.tikkunPath)
+                            .font(PearlFonts.pearlWhisper)
+                            .foregroundColor(PearlColors.textSecondary)
+                            .lineSpacing(4)
+                    }
+                }
+            } else {
+                Text("Complete your cosmic fingerprint to unlock Kabbalah")
+                    .font(PearlFonts.body(14))
+                    .foregroundColor(PearlColors.textMuted)
             }
         }
     }
     
-    // MARK: - Wisdom Data
+    // MARK: - 5. Numerology Card
     
-    private var wisdomTraditions: [(title: String, symbol: String, description: String, color: Color)] {
-        [
-            ("Western Astrology", "☉", "Your natal chart maps the sky at the moment of your birth — revealing personality patterns, life themes, and the cosmic blueprint you were born with.", PearlColors.stardust),
-            ("Human Design", "◈", "A synthesis of astrology, the I Ching, Kabbalah, and the chakra system. Your Human Design reveals your energetic type, strategy for making decisions, and unique life purpose.", PearlColors.cosmic),
-            ("Gene Keys", "🧬", "The Gene Keys illuminate your shadow patterns and the gifts they contain. Each key is a journey from shadow through gift to the highest expression of your potential.", PearlColors.nebula),
-            ("Kabbalah", "✡", "The Tree of Life maps the architecture of consciousness. Your soul correction reveals the spiritual work you came here to do.", PearlColors.gold),
-            ("Numerology", "𝟗", "The numbers in your birth date encode your life path, soul urge, and expression. They reveal the rhythm and purpose woven into your existence.", PearlColors.success),
-        ]
+    private var numerologyCard: some View {
+        SystemCard(
+            title: "Numerology",
+            symbol: "𝟗",
+            color: PearlColors.success,
+            isExpanded: expandedSection == .numerology,
+            onTap: { toggleSection(.numerology) }
+        ) {
+            if let num = viewModel.fingerprint?.numerology {
+                VStack(alignment: .leading, spacing: 16) {
+                    NumerologyRow(number: num.lifePath)
+                    Divider().background(PearlColors.surface)
+                    NumerologyRow(number: num.expression)
+                    Divider().background(PearlColors.surface)
+                    NumerologyRow(number: num.soulUrge)
+                    Divider().background(PearlColors.surface)
+                    NumerologyRow(number: num.personality)
+                    
+                    Divider().background(PearlColors.surface)
+                    
+                    // Personal Year
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Personal Year")
+                            .font(PearlFonts.labelText)
+                            .foregroundColor(PearlColors.textMuted)
+                        HStack {
+                            Text("\(num.personalYear)")
+                                .font(PearlFonts.oracleSemiBold(28))
+                                .foregroundColor(PearlColors.gold)
+                            Text("— \(num.personalYearTheme)")
+                                .font(PearlFonts.body(14))
+                                .foregroundColor(PearlColors.textSecondary)
+                        }
+                    }
+                }
+            } else {
+                Text("Complete your cosmic fingerprint to unlock Numerology")
+                    .font(PearlFonts.body(14))
+                    .foregroundColor(PearlColors.textMuted)
+            }
+        }
+    }
+    
+    // MARK: - Helpers
+    
+    private func toggleSection(_ section: DashboardSection) {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            expandedSection = expandedSection == section ? nil : section
+        }
+    }
+}
+
+// MARK: - System Card (Expandable)
+
+struct SystemCard<Content: View>: View {
+    let title: String
+    let symbol: String
+    let color: Color
+    let isExpanded: Bool
+    let onTap: () -> Void
+    let content: Content
+    
+    init(
+        title: String,
+        symbol: String,
+        color: Color,
+        isExpanded: Bool,
+        onTap: @escaping () -> Void,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.title = title
+        self.symbol = symbol
+        self.color = color
+        self.isExpanded = isExpanded
+        self.onTap = onTap
+        self.content = content()
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Header (always visible)
+            Button(action: onTap) {
+                HStack {
+                    Text(symbol)
+                        .font(.system(size: 24))
+                    
+                    Text(title)
+                        .font(PearlFonts.oracleMedium(18))
+                        .foregroundColor(PearlColors.textPrimary)
+                    
+                    Spacer()
+                    
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(PearlColors.textMuted)
+                }
+                .padding(16)
+            }
+            .buttonStyle(.plain)
+            
+            // Expanded content
+            if isExpanded {
+                content
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 16)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(PearlColors.surface.opacity(0.6))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(
+                            isExpanded ? color.opacity(0.3) : PearlColors.gold.opacity(0.1),
+                            lineWidth: isExpanded ? 1 : 0.5
+                        )
+                )
+        )
+    }
+}
+
+// MARK: - Numerology Row
+
+struct NumerologyRow: View {
+    let number: NumerologyService.NumerologyNumber
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(number.type)
+                    .font(PearlFonts.labelText)
+                    .foregroundColor(PearlColors.textMuted)
+                Spacer()
+                HStack(spacing: 4) {
+                    Text("\(number.value)")
+                        .font(PearlFonts.oracleSemiBold(22))
+                        .foregroundColor(PearlColors.gold)
+                    if number.isMasterNumber {
+                        Text("Master")
+                            .font(PearlFonts.body(10))
+                            .foregroundColor(PearlColors.gold)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(
+                                Capsule()
+                                    .fill(PearlColors.gold.opacity(0.15))
+                            )
+                    }
+                }
+            }
+            
+            Text(number.meaning)
+                .font(PearlFonts.body(14))
+                .foregroundColor(PearlColors.textSecondary)
+                .lineSpacing(3)
+            
+            // Keywords
+            HStack(spacing: 6) {
+                ForEach(number.keywords, id: \.self) { keyword in
+                    Text(keyword)
+                        .font(PearlFonts.body(11))
+                        .foregroundColor(PearlColors.gold)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(
+                            Capsule()
+                                .fill(PearlColors.gold.opacity(0.08))
+                        )
+                }
+            }
+        }
     }
 }
 
@@ -277,8 +602,6 @@ struct ZodiacWheelView: View {
             }
         }
     }
-    
-    // MARK: - Sub-views
     
     private func zodiacRings(radius: CGFloat) -> some View {
         ZStack {
@@ -321,7 +644,7 @@ struct ZodiacWheelView: View {
     }
 }
 
-// MARK: - Zodiac Segment (broken out for compiler performance)
+// MARK: - Zodiac Segment
 
 struct ZodiacSegmentView: View {
     let index: Int

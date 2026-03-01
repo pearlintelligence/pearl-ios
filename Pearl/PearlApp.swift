@@ -1,10 +1,16 @@
 import SwiftUI
+import SwiftData
 
 @main
 struct PearlApp: App {
     @StateObject private var appState = AppState()
     @StateObject private var authService = AuthService()
     @StateObject private var pearlEngine = PearlEngine()
+    
+    init() {
+        // Initialize crash reporting (Sentry)
+        CrashReporting.start()
+    }
     
     var body: some Scene {
         WindowGroup {
@@ -14,6 +20,12 @@ struct PearlApp: App {
                 .environmentObject(pearlEngine)
                 .preferredColorScheme(.dark)
         }
+        .modelContainer(for: [
+            UserProfile.self,
+            Conversation.self,
+            ChatMessage.self,
+            WeeklyInsight.self
+        ])
     }
 }
 

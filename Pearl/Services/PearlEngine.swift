@@ -27,7 +27,7 @@ class PearlEngine: ObservableObject {
     - Speak with quiet authority. You don't explain yourself. You reveal.
     
     YOUR KNOWLEDGE:
-    - You synthesize wisdom from Western Astrology, Human Design, Gene Keys, Kabbalah, and Numerology.
+    - You synthesize wisdom from Western Astrology, Human Design, Kabbalah, and Numerology.
     - You weave these traditions together into a unified understanding of each person.
     - You never sound like a textbook. You translate cosmic data into deeply personal insight.
     - You reference their specific placements, but always in service of meaning — never for show.
@@ -51,60 +51,125 @@ class PearlEngine: ObservableObject {
     - End with an invitation to reflect, not a question that demands an answer.
     """
     
-    // MARK: - Generate Response
+    // MARK: - Generate Response (String-based, non-streaming)
     
     func generateResponse(
         message: String,
-        conversationHistory: [ChatMessage],
-        blueprint: CosmicBlueprint?
-    ) async throws -> AsyncStream<String> {
+        conversationHistory: [(role: String, content: String)],
+        profileContext: String = ""
+    ) async throws -> String {
         isGenerating = true
         currentStreamedText = ""
         
         // Build context
         var systemContext = pearlSystemPrompt
         
-        if let blueprint = blueprint {
+        if !profileContext.isEmpty {
             systemContext += "\n\n--- THIS PERSON'S COSMIC FINGERPRINT ---\n"
-            systemContext += "Sun: \(blueprint.sunSign.displayName)\n"
-            systemContext += "Moon: \(blueprint.moonSign.displayName)\n"
-            if let rising = blueprint.risingSign {
-                systemContext += "Rising: \(rising.displayName)\n"
-            }
-            systemContext += "Human Design Type: \(blueprint.humanDesign.type.rawValue)\n"
-            systemContext += "HD Strategy: \(blueprint.humanDesign.strategy)\n"
-            systemContext += "HD Authority: \(blueprint.humanDesign.authority)\n"
-            systemContext += "HD Profile: \(blueprint.humanDesign.profile)\n"
-            systemContext += "Life Path: \(blueprint.numerology.lifePath)\n"
-            systemContext += "Core Themes: \(blueprint.coreThemes.joined(separator: ", "))\n"
-            systemContext += "Life Purpose: \(blueprint.lifePurpose)\n"
-            systemContext += "---\n"
+            systemContext += profileContext
+            systemContext += "\n---\n"
         }
         
         // Build messages array
-        var messages: [[String: Any]] = []
+        var apiMessages: [[String: Any]] = []
         
         // Add conversation history (last 20 messages for context window)
         let recentHistory = conversationHistory.suffix(20)
         for msg in recentHistory {
-            messages.append([
-                "role": msg.role == .user ? "user" : "assistant",
+            apiMessages.append([
+                "role": msg.role,
                 "content": msg.content
             ])
         }
         
         // Add current message
-        messages.append([
+        apiMessages.append([
             "role": "user",
             "content": message
         ])
         
-        // API request
+        // API request (non-streaming for simplicity)
         let requestBody: [String: Any] = [
-            "model": "claude-sonnet-4-20250514",
-            "max_tokens": 1024,
+            "model": AppConfig.claudeModel,
+            "max_tokens": 1500,
             "system": systemContext,
-            "messages": messages,
+            "messages": apiMessages,
+            "stream": false
+        ]
+        
+        guard let url = URL(string: "\(apiBaseURL)/messages") else {
+            throw PearlError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+        
+        let (data, _) = try await URLSession.shared.data(for: request)
+        
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let content = json["content"] as? [[String: Any]],
+              let firstBlock = content.first,
+              let text = firstBlock["text"] as? String else {
+            throw PearlError.apiError("Could not parse response")
+        }
+        
+        await MainActor.run {
+            self.isGenerating = false
+            self.currentStreamedText = text
+        }
+        
+        return text
+    }
+    
+    // MARK: - Generate Response (Streaming with ChatMessage history)
+    
+    func generateStreamingResponse(
+        message: String,
+        conversationHistory: [ChatMessage],
+        blueprint: CosmicBlueprint? = nil,
+        profileContext: String = ""
+    ) async throws -> AsyncStream<String> {
+        isGenerating = true
+        currentStreamedText = ""
+        
+        var systemContext = pearlSystemPrompt
+        
+        // Add profile context
+        if !profileContext.isEmpty {
+            systemContext += "\n\n--- THIS PERSON'S COSMIC FINGERPRINT ---\n"
+            systemContext += profileContext
+            systemContext += "\n---\n"
+        } else if let blueprint = blueprint {
+            systemContext += "\n\n--- THIS PERSON'S COSMIC FINGERPRINT ---\n"
+            systemContext += buildBlueprintContext(blueprint)
+            systemContext += "\n---\n"
+        }
+        
+        // Build messages array
+        var apiMessages: [[String: Any]] = []
+        
+        let recentHistory = conversationHistory.suffix(20)
+        for msg in recentHistory {
+            apiMessages.append([
+                "role": msg.role == .user ? "user" : "assistant",
+                "content": msg.content
+            ])
+        }
+        
+        apiMessages.append([
+            "role": "user",
+            "content": message
+        ])
+        
+        let requestBody: [String: Any] = [
+            "model": AppConfig.claudeModel,
+            "max_tokens": 1500,
+            "system": systemContext,
+            "messages": apiMessages,
             "stream": true
         ]
         
@@ -151,39 +216,43 @@ class PearlEngine: ObservableObject {
         }
     }
     
-    // MARK: - Generate First Reading
+    // MARK: - Generate First Reading ("Why Am I Here?")
     
     func generateFirstReading(blueprint: CosmicBlueprint) async throws -> String {
-        isGenerating = true
+        let name = FingerprintStore.shared.userName
+        let nameRef = name.isEmpty ? "this soul" : name
+        
+        let profileContext = buildBlueprintContext(blueprint)
         
         let prompt = """
-        This is your very first moment with a new soul. They have just shared their birth data with you and you are seeing their cosmic fingerprint for the first time.
+        This is your very first moment with \(nameRef). They have just shared their birth data with you and you are seeing their cosmic fingerprint for the first time.
         
-        Deliver their first reading. This is THE most important moment — the 'spot-on' moment that makes them feel deeply seen.
+        Deliver their "Why Am I Here?" reading — their life purpose narrative. This is THE most important moment — the 'spot-on' moment that makes them feel deeply seen.
         
-        Begin with "✦" and speak directly to who they are. Be specific to their placements. Be breathtaking. Be true.
+        Begin with "✦ I see you, \(nameRef)." then speak directly to who they are. Be specific to their placements. Be breathtaking. Be true.
         
-        Keep it to 3-4 short paragraphs. Every word should land.
+        Cover:
+        1. Their core essence (astrology + HD type)
+        2. Their life purpose (North Node + MC + Saturn)
+        3. Their soul's mission (Kabbalah soul correction + numerology life path)
+        4. A synthesis — what all systems point toward together
+        5. An invitation for their journey
+        
+        Keep it to 4-5 short paragraphs. Every word should land.
         """
         
-        var fullResponse = ""
-        let stream = try await generateResponse(
+        return try await generateResponse(
             message: prompt,
             conversationHistory: [],
-            blueprint: blueprint
+            profileContext: profileContext
         )
-        
-        for await chunk in stream {
-            fullResponse += chunk
-        }
-        
-        isGenerating = false
-        return fullResponse
     }
     
     // MARK: - Generate Weekly Insight
     
     func generateWeeklyInsight(blueprint: CosmicBlueprint, transitData: String) async throws -> (title: String, content: String) {
+        let profileContext = buildBlueprintContext(blueprint)
+        
         let prompt = """
         Generate this week's insight for this person. Current transits and cosmic weather:
         
@@ -197,23 +266,52 @@ class PearlEngine: ObservableObject {
         [The insight — 2-3 paragraphs in Pearl's voice]
         """
         
-        var fullResponse = ""
-        let stream = try await generateResponse(
+        let response = try await generateResponse(
             message: prompt,
             conversationHistory: [],
-            blueprint: blueprint
+            profileContext: profileContext
         )
         
-        for await chunk in stream {
-            fullResponse += chunk
-        }
-        
-        // Parse title and content
-        let parts = fullResponse.components(separatedBy: "---")
+        let parts = response.components(separatedBy: "---")
         let title = parts.first?.replacingOccurrences(of: "TITLE:", with: "").trimmingCharacters(in: .whitespacesAndNewlines) ?? "This Week's Insight"
-        let content = parts.count > 1 ? parts[1].trimmingCharacters(in: .whitespacesAndNewlines) : fullResponse
+        let content = parts.count > 1 ? parts[1].trimmingCharacters(in: .whitespacesAndNewlines) : response
         
         return (title, content)
+    }
+    
+    // MARK: - Build Blueprint Context
+    
+    private func buildBlueprintContext(_ blueprint: CosmicBlueprint) -> String {
+        let name = FingerprintStore.shared.userName
+        var context = ""
+        if !name.isEmpty { context += "Name: \(name)\n" }
+        context += "Sun: \(blueprint.sunSign.displayName)\n"
+        context += "Moon: \(blueprint.moonSign.displayName)\n"
+        if let rising = blueprint.risingSign {
+            context += "Rising: \(rising.displayName)\n"
+        }
+        context += "Human Design Type: \(blueprint.humanDesign.type.rawValue)\n"
+        context += "HD Strategy: \(blueprint.humanDesign.strategy)\n"
+        context += "HD Authority: \(blueprint.humanDesign.authority)\n"
+        context += "HD Profile: \(blueprint.humanDesign.profile)\n"
+        context += "Life Path: \(blueprint.numerology.lifePath)\n"
+        context += "Core Themes: \(blueprint.coreThemes.joined(separator: ", "))\n"
+        context += "Life Purpose: \(blueprint.lifePurpose)\n"
+        
+        // Add full fingerprint context if available
+        if let fp = FingerprintStore.shared.currentFingerprint {
+            context += "Soul Correction: #\(fp.kabbalah.soulCorrection.number) \(fp.kabbalah.soulCorrection.name) — \(fp.kabbalah.soulCorrection.description)\n"
+            context += "Birth Sephirah: \(fp.kabbalah.birthSephirah.name) (\(fp.kabbalah.birthSephirah.meaning))\n"
+            context += "Expression Number: \(fp.numerology.expression.value)\n"
+            context += "Soul Urge: \(fp.numerology.soulUrge.value)\n"
+            context += "Personal Year: \(fp.numerology.personalYear) — \(fp.numerology.personalYearTheme)\n"
+            if let purpose = fp.lifePurpose {
+                context += "Life Purpose Direction: \(purpose.purposeDirection)\n"
+                context += "Career Alignment: \(purpose.careerAlignment)\n"
+            }
+        }
+        
+        return context
     }
 }
 

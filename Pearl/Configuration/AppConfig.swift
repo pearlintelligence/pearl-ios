@@ -30,8 +30,45 @@ enum AppConfig {
         ProcessInfo.processInfo.environment["ANTHROPIC_API_KEY"] ?? ""
     }
     
+    static var astrologyAPIKey: String {
+        // Astrology-API.io — Swiss Ephemeris calculations
+        // Get a key at https://dashboard.astrology-api.io
+        ProcessInfo.processInfo.environment["ASTROLOGY_API_KEY"] ?? ""
+    }
+    
+    static var astrologyAPIBaseURL: String {
+        "https://api.astrology-api.io/api/v3"
+    }
+    
     static var anthropicModel: String {
         "claude-sonnet-4-20250514" // or claude-3-5-haiku for faster responses
+    }
+    
+    // Alias for convenience
+    static var claudeModel: String { anthropicModel }
+    
+    // MARK: - Sentry (Crash Reporting)
+    
+    static var sentryDSN: String {
+        // Set in environment or replace with your project DSN
+        // Get DSN from https://sentry.io → Project → Settings → Client Keys
+        ProcessInfo.processInfo.environment["SENTRY_DSN"] ?? ""
+    }
+    
+    static var isDebug: Bool {
+        #if DEBUG
+        return true
+        #else
+        return false
+        #endif
+    }
+    
+    static var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+    }
+    
+    static var buildNumber: String {
+        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
     }
     
     // MARK: - API Endpoints
@@ -51,8 +88,8 @@ enum AppConfig {
     
     static var enableHumanDesign: Bool { true }
     static var enableNumerology: Bool { true }
-    static var enableGeneKeys: Bool { false } // Phase 2
-    static var enableKabbalah: Bool { false }  // Phase 2
+    static var enableGeneKeys: Bool { false }  // Removed from v1 — proprietary
+    static var enableKabbalah: Bool { true }   // Enabled for P0
     
     // MARK: - Premium
     

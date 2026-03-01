@@ -82,10 +82,11 @@ struct BirthTimeStep: View {
                     .foregroundColor(PearlColors.goldLight)
                     .multilineTextAlignment(.center)
                 
-                Text("The exact moment shapes the lens through which you see the world.")
+                Text("The exact moment shapes the lens\nthrough which you see the world.")
                     .font(PearlFonts.pearlWhisper)
                     .foregroundColor(PearlColors.textSecondary)
                     .multilineTextAlignment(.center)
+                    .lineSpacing(4)
                     .padding(.horizontal, 40)
             }
             .opacity(showContent ? 1 : 0)
@@ -145,7 +146,7 @@ struct BirthLocationStep: View {
         VStack(spacing: 0) {
             VStack(spacing: 16) {
                 DiamondSymbol(size: 20)
-                    .padding(.top, 60)
+                    .padding(.top, 32)
                 
                 Text("Where were you born?")
                     .font(PearlFonts.screenTitle)
@@ -205,6 +206,7 @@ struct BirthLocationStep: View {
                     Text(location)
                         .font(PearlFonts.bodyMedium(15))
                         .foregroundColor(PearlColors.goldLight)
+                        .lineLimit(1)
                     Spacer()
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(PearlColors.success)
@@ -234,6 +236,7 @@ struct BirthLocationStep: View {
                                 Text(result)
                                     .font(PearlFonts.body(15))
                                     .foregroundColor(PearlColors.textPrimary)
+                                    .lineLimit(1)
                                 Spacer()
                             }
                             .padding(.vertical, 12)
@@ -264,33 +267,37 @@ struct BirthLocationStep: View {
     }
 }
 
-// MARK: - Generating Step
+// MARK: - Generating Step (Four-System)
 
 struct GeneratingStep: View {
     @ObservedObject var viewModel: OnboardingViewModel
     
-    @State private var currentPhrase = 0
-    @State private var phraseOpacity: Double = 1.0
     @State private var rotationAngle: Double = 0
-    
-    let phrases = [
-        "Reading the stars...",
-        "Mapping your cosmic fingerprint...",
-        "Consulting the ancient wisdom...",
-        "Finding the patterns in your design...",
-        "Pearl is seeing you for the first time..."
+    @State private var innerRotation: Double = 0
+    @State private var systemIcons: [SystemIcon] = [
+        SystemIcon(symbol: "☉", label: "Astrology", offset: 0),
+        SystemIcon(symbol: "◈", label: "Human Design", offset: 1),
+        SystemIcon(symbol: "✡", label: "Kabbalah", offset: 2),
+        SystemIcon(symbol: "𝟗", label: "Numerology", offset: 3),
     ]
+    
+    struct SystemIcon: Identifiable {
+        let id = UUID()
+        let symbol: String
+        let label: String
+        let offset: Int
+    }
     
     var body: some View {
         VStack(spacing: 40) {
             Spacer()
             
-            // Animated cosmic ring
+            // Animated cosmic mandala
             ZStack {
                 // Outer ring
                 Circle()
                     .stroke(PearlColors.gold.opacity(0.2), lineWidth: 1)
-                    .frame(width: 160, height: 160)
+                    .frame(width: 200, height: 200)
                 
                 // Rotating ring
                 Circle()
@@ -299,23 +306,41 @@ struct GeneratingStep: View {
                         PearlColors.goldGradient,
                         style: StrokeStyle(lineWidth: 2, lineCap: .round)
                     )
-                    .frame(width: 160, height: 160)
+                    .frame(width: 200, height: 200)
                     .rotationEffect(.degrees(rotationAngle))
                 
-                // Inner ring
+                // Middle ring
                 Circle()
                     .stroke(PearlColors.gold.opacity(0.15), lineWidth: 1)
-                    .frame(width: 120, height: 120)
+                    .frame(width: 150, height: 150)
                 
-                // Second rotating ring
+                // Counter-rotating ring
                 Circle()
                     .trim(from: 0, to: 0.2)
                     .stroke(
                         PearlColors.goldLight.opacity(0.6),
                         style: StrokeStyle(lineWidth: 1.5, lineCap: .round)
                     )
-                    .frame(width: 120, height: 120)
-                    .rotationEffect(.degrees(-rotationAngle * 0.7))
+                    .frame(width: 150, height: 150)
+                    .rotationEffect(.degrees(-innerRotation))
+                
+                // Inner ring
+                Circle()
+                    .stroke(PearlColors.gold.opacity(0.1), lineWidth: 0.5)
+                    .frame(width: 100, height: 100)
+                
+                // Four system icons orbiting
+                ForEach(Array(systemIcons.enumerated()), id: \.element.id) { index, icon in
+                    let angle = (Double(index) / 5.0 * 360.0 + rotationAngle * 0.3) * .pi / 180
+                    Text(icon.symbol)
+                        .font(.system(size: 20))
+                        .position(
+                            x: 100 + 75 * cos(angle),
+                            y: 100 + 75 * sin(angle)
+                        )
+                        .opacity(0.7)
+                }
+                .frame(width: 200, height: 200)
                 
                 // Center diamond
                 Text("✦")
@@ -324,33 +349,36 @@ struct GeneratingStep: View {
                     .pearlGlow()
             }
             
-            // Animated phrases
-            Text(phrases[currentPhrase])
-                .font(PearlFonts.pearlWhisper)
-                .foregroundColor(PearlColors.textSecondary)
-                .opacity(phraseOpacity)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
+            // Current phase text
+            VStack(spacing: 12) {
+                Text(viewModel.generatingPhase.rawValue)
+                    .font(PearlFonts.pearlWhisper)
+                    .foregroundColor(PearlColors.goldLight)
+                    .multilineTextAlignment(.center)
+                    .animation(.easeInOut(duration: 0.3), value: viewModel.generatingPhase.rawValue)
+                    .id(viewModel.generatingPhase.rawValue)
+                
+                // Four system dots
+                HStack(spacing: 8) {
+                    ForEach(0..<5) { i in
+                        Circle()
+                            .fill(phaseIndex >= i ? PearlColors.gold : PearlColors.surface)
+                            .frame(width: 6, height: 6)
+                            .animation(.easeInOut(duration: 0.3), value: phaseIndex)
+                    }
+                }
+            }
+            .padding(.horizontal, 40)
             
             Spacer()
         }
         .onAppear {
             // Start rotation
-            withAnimation(.linear(duration: 8).repeatForever(autoreverses: false)) {
+            withAnimation(.linear(duration: 10).repeatForever(autoreverses: false)) {
                 rotationAngle = 360
             }
-            
-            // Cycle through phrases
-            Timer.scheduledTimer(withTimeInterval: 2.5, repeats: true) { timer in
-                withAnimation(.easeInOut(duration: 0.4)) {
-                    phraseOpacity = 0
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    currentPhrase = (currentPhrase + 1) % phrases.count
-                    withAnimation(.easeInOut(duration: 0.4)) {
-                        phraseOpacity = 1
-                    }
-                }
+            withAnimation(.linear(duration: 7).repeatForever(autoreverses: false)) {
+                innerRotation = 360
             }
             
             // Generate blueprint
@@ -359,43 +387,152 @@ struct GeneratingStep: View {
             }
         }
     }
+    
+    private var phaseIndex: Int {
+        switch viewModel.generatingPhase {
+        case .stars: return 0
+        case .fingerprint: return 1
+        case .humanDesign: return 2
+        case .kabbalah: return 3
+        case .numerology: return 3
+        case .synthesis: return 4
+        }
+    }
 }
 
-// MARK: - First Reading Step
+// MARK: - First Reading Step ("Why Am I Here?")
 
 struct FirstReadingStep: View {
+    let userName: String
     let reading: String
+    let lifePurpose: LifePurposeEngine.LifePurposeProfile?
     let onContinue: () -> Void
     
-    @State private var showContent = false
+    @State private var showHeader = false
+    @State private var showPurpose = false
+    @State private var showReading = false
     @State private var showButton = false
     
     var body: some View {
         ScrollView {
             VStack(spacing: 32) {
                 // Header
-                VStack(spacing: 12) {
+                VStack(spacing: 16) {
                     Text("✦")
                         .font(.system(size: 36))
                         .foregroundColor(PearlColors.gold)
-                        .pearlGlow()
+                        .pearlGlow(radius: 16)
                     
-                    Text("Pearl Speaks")
+                    Text("Your Life Purpose")
                         .font(PearlFonts.screenTitle)
                         .foregroundColor(PearlColors.goldLight)
+                    
+                    if !userName.isEmpty {
+                        Text("\(userName), this is why you're here")
+                            .font(PearlFonts.pearlWhisper)
+                            .foregroundColor(PearlColors.textSecondary)
+                    }
                 }
                 .padding(.top, 60)
-                .opacity(showContent ? 1 : 0)
+                .opacity(showHeader ? 1 : 0)
+                .offset(y: showHeader ? 0 : 20)
                 
-                // Pearl's first reading
-                Text(reading)
-                    .font(PearlFonts.pearlMessage)
-                    .foregroundColor(PearlColors.goldLight)
-                    .lineSpacing(8)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-                    .opacity(showContent ? 1 : 0)
-                    .offset(y: showContent ? 0 : 20)
+                // Decorative divider
+                HStack(spacing: 12) {
+                    Rectangle()
+                        .fill(PearlColors.gold.opacity(0.2))
+                        .frame(height: 0.5)
+                    DiamondSymbol(size: 8, color: PearlColors.gold.opacity(0.4))
+                    Rectangle()
+                        .fill(PearlColors.gold.opacity(0.2))
+                        .frame(height: 0.5)
+                }
+                .padding(.horizontal, 40)
+                .opacity(showHeader ? 1 : 0)
+                
+                // Life Purpose headline (THE key moment)
+                if let purpose = lifePurpose {
+                    VStack(spacing: 20) {
+                        Text(purpose.headline)
+                            .font(PearlFonts.oracleMedium(22))
+                            .foregroundColor(PearlColors.goldLight)
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(6)
+                            .padding(.horizontal, 24)
+                        
+                        // Purpose direction
+                        Text(purpose.purposeDirection)
+                            .font(PearlFonts.pearlMessage)
+                            .foregroundColor(PearlColors.textSecondary)
+                            .lineSpacing(6)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 32)
+                        
+                        // Career alignment teaser
+                        VStack(spacing: 8) {
+                            Text("Career Alignment")
+                                .font(PearlFonts.labelText)
+                                .foregroundColor(PearlColors.gold)
+                                .tracking(1)
+                                .textCase(.uppercase)
+                            Text(purpose.careerAlignment)
+                                .font(PearlFonts.pearlWhisper)
+                                .foregroundColor(PearlColors.textSecondary)
+                                .lineSpacing(4)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 32)
+                        }
+                        .padding(.top, 8)
+                        
+                        // Source placements
+                        HStack(spacing: 12) {
+                            Text("☉ \(purpose.sourceData.sunSign)")
+                            Text("☊ \(purpose.sourceData.northNodeSign)")
+                            if let mc = purpose.sourceData.midheavenSign {
+                                Text("MC \(mc)")
+                            }
+                            Text("♄ \(purpose.sourceData.saturnSign)")
+                        }
+                        .font(PearlFonts.body(11))
+                        .foregroundColor(PearlColors.gold.opacity(0.6))
+                        .padding(.top, 4)
+                    }
+                    .opacity(showPurpose ? 1 : 0)
+                    .offset(y: showPurpose ? 0 : 20)
+                } else {
+                    // Fallback: show the reading text if Life Purpose unavailable
+                    Text(reading)
+                        .font(PearlFonts.pearlMessage)
+                        .foregroundColor(PearlColors.goldLight)
+                        .lineSpacing(8)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                        .opacity(showPurpose ? 1 : 0)
+                        .offset(y: showPurpose ? 0 : 20)
+                }
+                
+                // Pearl's cosmic reading
+                if lifePurpose != nil && !reading.isEmpty {
+                    VStack(spacing: 12) {
+                        HStack(spacing: 12) {
+                            Rectangle().fill(PearlColors.gold.opacity(0.15)).frame(height: 0.5)
+                            Text("Pearl's Message")
+                                .font(PearlFonts.caption)
+                                .foregroundColor(PearlColors.textMuted)
+                            Rectangle().fill(PearlColors.gold.opacity(0.15)).frame(height: 0.5)
+                        }
+                        .padding(.horizontal, 32)
+                        
+                        Text(reading)
+                            .font(PearlFonts.pearlWhisper)
+                            .foregroundColor(PearlColors.goldLight.opacity(0.7))
+                            .lineSpacing(6)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 32)
+                    }
+                    .opacity(showReading ? 1 : 0)
+                    .offset(y: showReading ? 0 : 15)
+                }
                 
                 Spacer(minLength: 40)
                 
@@ -407,7 +544,7 @@ struct FirstReadingStep: View {
                         onContinue()
                     }
                     
-                    Text("Your journey with Pearl begins now")
+                    Text("Your full Life Purpose awaits inside")
                         .font(PearlFonts.caption)
                         .foregroundColor(PearlColors.textMuted)
                 }
@@ -419,9 +556,15 @@ struct FirstReadingStep: View {
         .scrollIndicators(.hidden)
         .onAppear {
             withAnimation(.easeOut(duration: 1.0).delay(0.3)) {
-                showContent = true
+                showHeader = true
             }
-            withAnimation(.easeOut(duration: 0.6).delay(2.0)) {
+            withAnimation(.easeOut(duration: 1.0).delay(1.0)) {
+                showPurpose = true
+            }
+            withAnimation(.easeOut(duration: 0.8).delay(2.2)) {
+                showReading = true
+            }
+            withAnimation(.easeOut(duration: 0.6).delay(3.0)) {
                 showButton = true
             }
         }
