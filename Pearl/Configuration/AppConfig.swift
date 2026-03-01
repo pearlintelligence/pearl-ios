@@ -21,14 +21,20 @@ enum AppConfig {
         #endif
     }
     
-    // MARK: - API Keys
-    // ⚠️ In production, these should come from a secure backend or keychain.
-    // NEVER ship API keys in the binary.
+    // MARK: - Convex AI Proxy
+    // All AI calls route through Convex backend — API key stays server-side.
     
-    static var anthropicAPIKey: String {
-        // Read from environment or secure storage
-        ProcessInfo.processInfo.environment["ANTHROPIC_API_KEY"] ?? ""
+    static var convexSiteURL: String {
+        ProcessInfo.processInfo.environment["CONVEX_SITE_URL"]
+            ?? "https://innerpearl.convex.site"  // TODO: Set actual deployment URL
     }
+    
+    static var iosApiSecret: String {
+        ProcessInfo.processInfo.environment["IOS_API_SECRET"] ?? ""
+    }
+    
+    // MARK: - API Keys
+    // Only non-AI keys remain on the client.
     
     static var astrologyAPIKey: String {
         // Astrology-API.io — Swiss Ephemeris calculations
@@ -74,8 +80,9 @@ enum AppConfig {
     
     // MARK: - API Endpoints
     
-    static var anthropicBaseURL: String {
-        "https://api.anthropic.com/v1"
+    /// AI proxy endpoint on Convex (replaces direct Anthropic calls)
+    static var aiProxyURL: String {
+        "\(convexSiteURL)/api/ai/chat"
     }
     
     // MARK: - App Settings

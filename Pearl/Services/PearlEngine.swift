@@ -2,17 +2,18 @@ import Foundation
 import Combine
 
 // MARK: - Pearl Engine
-// Core AI integration — connects to Claude API to power Pearl's voice
+// Core AI integration — calls Convex proxy which forwards to Claude API.
+// The Anthropic API key never touches the client.
 
 class PearlEngine: ObservableObject {
     @Published var isGenerating: Bool = false
     @Published var currentStreamedText: String = ""
     
-    private let apiBaseURL = "https://api.anthropic.com/v1"
-    private var apiKey: String {
-        // In production, retrieve from Keychain
-        ProcessInfo.processInfo.environment["ANTHROPIC_API_KEY"] ?? ""
-    }
+    /// Convex HTTP proxy URL — keeps API key server-side
+    private var proxyBaseURL: String { AppConfig.convexSiteURL }
+    
+    /// Shared secret for iOS ↔ Convex auth
+    private var apiSecret: String { AppConfig.iosApiSecret }
     
     // MARK: - Pearl's System Prompt
     
@@ -88,7 +89,7 @@ class PearlEngine: ObservableObject {
             "content": message
         ])
         
-        // API request (non-streaming for simplicity)
+        // API request — routed through Convex proxy
         let requestBody: [String: Any] = [
             "model": AppConfig.claudeModel,
             "max_tokens": 1500,
@@ -97,18 +98,25 @@ class PearlEngine: ObservableObject {
             "stream": false
         ]
         
-        guard let url = URL(string: "\(apiBaseURL)/messages") else {
+        guard let url = URL(string: "\(proxyBaseURL)/api/ai/chat") else {
             throw PearlError.invalidURL
         }
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
-        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        request.setValue("Bearer \(apiSecret)", forHTTPHeaderField: "Authorization")
         request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
         
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        // Check for HTTP errors from the proxy
+        if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
+            if httpResponse.statusCode == 401 {
+                throw PearlError.apiError("Authentication failed — check IOS_API_SECRET")
+            }
+            throw PearlError.apiError("Proxy returned status \(httpResponse.statusCode)")
+        }
         
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let content = json["content"] as? [[String: Any]],
@@ -173,15 +181,14 @@ class PearlEngine: ObservableObject {
             "stream": true
         ]
         
-        guard let url = URL(string: "\(apiBaseURL)/messages") else {
+        guard let url = URL(string: "\(proxyBaseURL)/api/ai/chat") else {
             throw PearlError.invalidURL
         }
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
-        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        request.setValue("Bearer \(apiSecret)", forHTTPHeaderField: "Authorization")
         request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
         
         let (stream, _) = try await URLSession.shared.bytes(for: request)
