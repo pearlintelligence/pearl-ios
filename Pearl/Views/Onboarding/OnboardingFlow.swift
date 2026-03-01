@@ -77,6 +77,7 @@ struct OnboardingFlow: View {
                         FirstReadingStep(
                             userName: viewModel.userName,
                             reading: viewModel.firstReading,
+                            lifePurpose: viewModel.lifePurpose,
                             onContinue: {
                                 appState.hasCompletedOnboarding = true
                             }

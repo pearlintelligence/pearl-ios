@@ -14,6 +14,7 @@ class OnboardingViewModel: ObservableObject {
     @Published var selectedLocation: String? = nil
     @Published var locationResults: [String] = []
     @Published var firstReading: String = ""
+    @Published var lifePurpose: LifePurposeEngine.LifePurposeProfile? = nil
     @Published var isGenerating: Bool = false
     @Published var generatingPhase: GeneratingPhase = .stars
     
@@ -190,6 +191,9 @@ class OnboardingViewModel: ObservableObject {
                 lifePurpose: fingerprint.synthesis.lifePurpose
             )
             BlueprintStore.shared.currentBlueprint = legacyBlueprint
+            
+            // Store Life Purpose (already generated in the builder)
+            self.lifePurpose = fingerprint.lifePurpose
             
             // Phase 7: Generate first reading
             generatingPhase = .synthesis

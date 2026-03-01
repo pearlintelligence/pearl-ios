@@ -21,10 +21,23 @@ struct DashboardView: View {
                         // Greeting header
                         greetingHeader
                         
-                        // Morning Cosmic Brief card
+                        // Life Purpose card (CORE — most important)
+                        if let purpose = viewModel.fingerprint?.lifePurpose {
+                            NavigationLink {
+                                LifePurposeView(
+                                    purpose: purpose,
+                                    userName: FingerprintStore.shared.userName ?? "Seeker"
+                                )
+                            } label: {
+                                LifePurposeCard(purpose: purpose, onTap: {})
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        
+                        // Morning Cosmic Brief card (label: "What's Happening Now")
                         morningBriefCard
                         
-                        // Five-System Fingerprint
+                        // Five-System Fingerprint (label: "Your Blueprint")
                         fiveSystemSection
                         
                         Spacer(minLength: 100)
@@ -97,7 +110,7 @@ struct DashboardView: View {
                             HStack {
                                 Text("☉")
                                     .font(.system(size: 20))
-                                Text("Today's Cosmic Brief")
+                                Text("What's Happening Now")
                                     .font(PearlFonts.cardTitle)
                                     .foregroundColor(PearlColors.goldLight)
                                 Spacer()
@@ -136,7 +149,7 @@ struct DashboardView: View {
                             .font(.system(size: 28))
                             .foregroundColor(PearlColors.gold.opacity(0.6))
                         
-                        Text("Your Morning Cosmic Brief")
+                        Text("What's Happening Now")
                             .font(PearlFonts.cardTitle)
                             .foregroundColor(PearlColors.goldLight)
                         
@@ -161,7 +174,7 @@ struct DashboardView: View {
     
     private var fiveSystemSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Your Cosmic Fingerprint")
+            Text("Your Blueprint")
                 .font(PearlFonts.sectionTitle)
                 .foregroundColor(PearlColors.goldLight)
                 .padding(.leading, 4)

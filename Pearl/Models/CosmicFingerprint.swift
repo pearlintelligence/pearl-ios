@@ -23,6 +23,9 @@ struct CosmicFingerprint: Codable, Identifiable {
     // 5. Numerology
     let numerology: NumerologyService.FullNumerologyProfile
     
+    // Life Purpose (CORE — generated immediately after natal chart)
+    let lifePurpose: LifePurposeEngine.LifePurposeProfile?
+    
     // Pearl's synthesis of all five systems
     let synthesis: PearlSynthesis
 }
@@ -33,6 +36,7 @@ struct AstrologySnapshot: Codable {
     let sunSign: ZodiacSign
     let moonSign: ZodiacSign
     let risingSign: ZodiacSign?
+    let midheavenSign: ZodiacSign?   // MC — career direction, public role
     let planetaryPositions: [PlanetaryPosition]
     let houses: [HousePosition]?
     let aspects: [Aspect]
@@ -101,10 +105,23 @@ class CosmicFingerprintBuilder {
             sunSign: natalChart.sunSign,
             moonSign: natalChart.moonSign,
             risingSign: natalChart.risingSign,
+            midheavenSign: natalChart.midheavenSign,
             planetaryPositions: natalChart.planets,
             houses: natalChart.houses,
             aspects: natalChart.aspects
         )
+        
+        // 1b. Life Purpose (CORE — runs immediately after natal chart)
+        let lifePurposeEngine = LifePurposeEngine()
+        var lifePurpose: LifePurposeEngine.LifePurposeProfile? = nil
+        do {
+            lifePurpose = try await lifePurposeEngine.generateLifePurpose(
+                from: natalChart,
+                userName: name
+            )
+        } catch {
+            print("⚠️ Life Purpose generation failed: \(error.localizedDescription)")
+        }
         
         // 2. Human Design
         let hdCalc = await humanDesignService.calculate(
@@ -170,6 +187,7 @@ class CosmicFingerprintBuilder {
             geneKeys: geneKeys,
             kabbalah: kabbalah,
             numerology: numerology,
+            lifePurpose: lifePurpose,
             synthesis: synthesis
         )
     }

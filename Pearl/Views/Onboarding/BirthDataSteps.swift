@@ -406,9 +406,11 @@ struct GeneratingStep: View {
 struct FirstReadingStep: View {
     let userName: String
     let reading: String
+    let lifePurpose: LifePurposeEngine.LifePurposeProfile?
     let onContinue: () -> Void
     
     @State private var showHeader = false
+    @State private var showPurpose = false
     @State private var showReading = false
     @State private var showButton = false
     
@@ -422,12 +424,12 @@ struct FirstReadingStep: View {
                         .foregroundColor(PearlColors.gold)
                         .pearlGlow(radius: 16)
                     
-                    Text("Pearl Speaks")
+                    Text("Your Life Purpose")
                         .font(PearlFonts.screenTitle)
                         .foregroundColor(PearlColors.goldLight)
                     
                     if !userName.isEmpty {
-                        Text("For \(userName)")
+                        Text("\(userName), this is why you're here")
                             .font(PearlFonts.pearlWhisper)
                             .foregroundColor(PearlColors.textSecondary)
                     }
@@ -449,15 +451,89 @@ struct FirstReadingStep: View {
                 .padding(.horizontal, 40)
                 .opacity(showHeader ? 1 : 0)
                 
-                // Pearl's first reading — "Why Am I Here?"
-                Text(reading)
-                    .font(PearlFonts.pearlMessage)
-                    .foregroundColor(PearlColors.goldLight)
-                    .lineSpacing(8)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
+                // Life Purpose headline (THE key moment)
+                if let purpose = lifePurpose {
+                    VStack(spacing: 20) {
+                        Text(purpose.headline)
+                            .font(PearlFonts.oracleMedium(22))
+                            .foregroundColor(PearlColors.goldLight)
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(6)
+                            .padding(.horizontal, 24)
+                        
+                        // Purpose direction
+                        Text(purpose.purposeDirection)
+                            .font(PearlFonts.pearlMessage)
+                            .foregroundColor(PearlColors.textSecondary)
+                            .lineSpacing(6)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 32)
+                        
+                        // Career alignment teaser
+                        VStack(spacing: 8) {
+                            Text("Career Alignment")
+                                .font(PearlFonts.labelText)
+                                .foregroundColor(PearlColors.gold)
+                                .tracking(1)
+                                .textCase(.uppercase)
+                            Text(purpose.careerAlignment)
+                                .font(PearlFonts.pearlWhisper)
+                                .foregroundColor(PearlColors.textSecondary)
+                                .lineSpacing(4)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 32)
+                        }
+                        .padding(.top, 8)
+                        
+                        // Source placements
+                        HStack(spacing: 12) {
+                            Text("☉ \(purpose.sourceData.sunSign)")
+                            Text("☊ \(purpose.sourceData.northNodeSign)")
+                            if let mc = purpose.sourceData.midheavenSign {
+                                Text("MC \(mc)")
+                            }
+                            Text("♄ \(purpose.sourceData.saturnSign)")
+                        }
+                        .font(PearlFonts.body(11))
+                        .foregroundColor(PearlColors.gold.opacity(0.6))
+                        .padding(.top, 4)
+                    }
+                    .opacity(showPurpose ? 1 : 0)
+                    .offset(y: showPurpose ? 0 : 20)
+                } else {
+                    // Fallback: show the reading text if Life Purpose unavailable
+                    Text(reading)
+                        .font(PearlFonts.pearlMessage)
+                        .foregroundColor(PearlColors.goldLight)
+                        .lineSpacing(8)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                        .opacity(showPurpose ? 1 : 0)
+                        .offset(y: showPurpose ? 0 : 20)
+                }
+                
+                // Pearl's cosmic reading
+                if lifePurpose != nil && !reading.isEmpty {
+                    VStack(spacing: 12) {
+                        HStack(spacing: 12) {
+                            Rectangle().fill(PearlColors.gold.opacity(0.15)).frame(height: 0.5)
+                            Text("Pearl's Message")
+                                .font(PearlFonts.caption)
+                                .foregroundColor(PearlColors.textMuted)
+                            Rectangle().fill(PearlColors.gold.opacity(0.15)).frame(height: 0.5)
+                        }
+                        .padding(.horizontal, 32)
+                        
+                        Text(reading)
+                            .font(PearlFonts.pearlWhisper)
+                            .foregroundColor(PearlColors.goldLight.opacity(0.7))
+                            .lineSpacing(6)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 32)
+                    }
                     .opacity(showReading ? 1 : 0)
-                    .offset(y: showReading ? 0 : 20)
+                    .offset(y: showReading ? 0 : 15)
+                }
                 
                 Spacer(minLength: 40)
                 
@@ -469,7 +545,7 @@ struct FirstReadingStep: View {
                         onContinue()
                     }
                     
-                    Text("Your journey with Pearl begins now")
+                    Text("Your full Life Purpose awaits inside")
                         .font(PearlFonts.caption)
                         .foregroundColor(PearlColors.textMuted)
                 }
@@ -484,9 +560,12 @@ struct FirstReadingStep: View {
                 showHeader = true
             }
             withAnimation(.easeOut(duration: 1.0).delay(1.0)) {
+                showPurpose = true
+            }
+            withAnimation(.easeOut(duration: 0.8).delay(2.2)) {
                 showReading = true
             }
-            withAnimation(.easeOut(duration: 0.6).delay(2.5)) {
+            withAnimation(.easeOut(duration: 0.6).delay(3.0)) {
                 showButton = true
             }
         }

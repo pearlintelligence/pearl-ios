@@ -240,15 +240,26 @@ class AstrologyService {
             aspects = calculateAspects(planets: planets)
         }
         
-        // Extract Big Three
+        // Extract Big Three + MC
         let sunSign = planets.first(where: { $0.planet == .sun })!.sign
         let moonSign = planets.first(where: { $0.planet == .moon })!.sign
         let risingSign = houses?.first.map { $0.sign }
+        
+        // Midheaven from angles or house 10
+        var mcSign: ZodiacSign? = nil
+        if let angles = chartData["angles"] as? [String: [String: Any]],
+           let mc = angles["Midheaven"] ?? angles["MC"],
+           let mcSignName = mc["sign"] as? String {
+            mcSign = zodiacSignFromName(mcSignName)
+        } else if let h10 = houses?.first(where: { $0.house == 10 }) {
+            mcSign = h10.sign
+        }
         
         return NatalChartData(
             sunSign: sunSign,
             moonSign: moonSign,
             risingSign: risingSign,
+            midheavenSign: mcSign,
             planets: planets,
             houses: houses,
             aspects: aspects
@@ -394,11 +405,13 @@ class AstrologyService {
         let sunSign = zodiacSign(for: planets.first(where: { $0.planet == .sun })!.degree)
         let moonSign = zodiacSign(for: planets.first(where: { $0.planet == .moon })!.degree)
         let risingSign = houses?.first.map { zodiacSign(for: $0.degree) }
+        let mcSign = houses?.first(where: { $0.house == 10 }).map { zodiacSign(for: $0.degree) }
         
         return NatalChartData(
             sunSign: sunSign,
             moonSign: moonSign,
             risingSign: risingSign,
+            midheavenSign: mcSign,
             planets: planets,
             houses: houses,
             aspects: aspects
@@ -658,6 +671,7 @@ struct NatalChartData {
     let sunSign: ZodiacSign
     let moonSign: ZodiacSign
     let risingSign: ZodiacSign?
+    let midheavenSign: ZodiacSign?    // MC — career direction, public role
     let planets: [PlanetaryPosition]
     let houses: [HousePosition]?
     let aspects: [Aspect]
