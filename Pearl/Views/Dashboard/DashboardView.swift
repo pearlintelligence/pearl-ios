@@ -1,7 +1,7 @@
 import SwiftUI
 
 // MARK: - Dashboard View
-// Five-System Cosmic Fingerprint — the unified profile dashboard
+// Cosmic Fingerprint — the unified four-system profile dashboard
 
 struct DashboardView: View {
     @StateObject private var viewModel = DashboardViewModel()
@@ -37,8 +37,8 @@ struct DashboardView: View {
                         // Morning Cosmic Brief card (label: "What's Happening Now")
                         morningBriefCard
                         
-                        // Five-System Fingerprint (label: "Your Blueprint")
-                        fiveSystemSection
+                        // Four-System Fingerprint (label: "Your Blueprint")
+                        cosmicBlueprintSection
                         
                         Spacer(minLength: 100)
                     }
@@ -170,16 +170,16 @@ struct DashboardView: View {
         }
     }
     
-    // MARK: - Five-System Section
+    // MARK: - Cosmic Blueprint Section (Four Systems)
     
-    private var fiveSystemSection: some View {
+    private var cosmicBlueprintSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Your Blueprint")
                 .font(PearlFonts.sectionTitle)
                 .foregroundColor(PearlColors.goldLight)
                 .padding(.leading, 4)
             
-            Text("Five ancient traditions, one unified portrait")
+            Text("Four ancient traditions, one unified portrait")
                 .font(PearlFonts.pearlWhisper)
                 .foregroundColor(PearlColors.textMuted)
                 .padding(.leading, 4)

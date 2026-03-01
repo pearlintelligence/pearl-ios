@@ -38,6 +38,8 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "Pearl uses your birth location to calculate your cosmic blueprint."
         INFOPLIST_KEY_NSFaceIDUsageDescription: "Pearl uses Face ID to secure your account."
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: "Pearl uses your microphone so you can speak your questions aloud."
+        INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: "Pearl uses speech recognition to transcribe your spoken questions."
         CODE_SIGN_ENTITLEMENTS: Pearl/Pearl.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor

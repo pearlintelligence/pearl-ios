@@ -267,7 +267,7 @@ struct BirthLocationStep: View {
     }
 }
 
-// MARK: - Generating Step (Five-System)
+// MARK: - Generating Step (Four-System)
 
 struct GeneratingStep: View {
     @ObservedObject var viewModel: OnboardingViewModel
@@ -329,7 +329,7 @@ struct GeneratingStep: View {
                     .stroke(PearlColors.gold.opacity(0.1), lineWidth: 0.5)
                     .frame(width: 100, height: 100)
                 
-                // Five system icons orbiting
+                // Four system icons orbiting
                 ForEach(Array(systemIcons.enumerated()), id: \.element.id) { index, icon in
                     let angle = (Double(index) / 5.0 * 360.0 + rotationAngle * 0.3) * .pi / 180
                     Text(icon.symbol)
@@ -358,7 +358,7 @@ struct GeneratingStep: View {
                     .animation(.easeInOut(duration: 0.3), value: viewModel.generatingPhase.rawValue)
                     .id(viewModel.generatingPhase.rawValue)
                 
-                // Five system dots
+                // Four system dots
                 HStack(spacing: 8) {
                     ForEach(0..<5) { i in
                         Circle()

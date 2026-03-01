@@ -126,7 +126,7 @@ class OnboardingViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Five-System Blueprint Generation
+    // MARK: - Four-System Blueprint Generation
     
     func generateBlueprint() async {
         isGenerating = true
@@ -139,7 +139,7 @@ class OnboardingViewModel: ObservableObject {
             // Phase 2: Fingerprint
             generatingPhase = .fingerprint
             
-            // Build the full five-system fingerprint
+            // Build the full four-system fingerprint
             let builder = CosmicFingerprintBuilder()
             let fingerprint = try await builder.build(
                 name: userName,
