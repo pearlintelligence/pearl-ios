@@ -98,7 +98,7 @@ schemes:
           value: ""
           isEnabled: true
         - variable: SENTRY_DSN
-          value: ""
+          value: "https://898637e3f757a5919fd2c8d07df22dd6@o4510967681646592.ingest.us.sentry.io/4510967689969664"
           isEnabled: true
     test:
       config: Debug
