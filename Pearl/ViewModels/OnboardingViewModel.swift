@@ -20,6 +20,8 @@ class OnboardingViewModel: ObservableObject {
     // Location data
     var birthLatitude: Double = 0
     var birthLongitude: Double = 0
+    var birthCityName: String? = nil
+    var birthCountryCode: String? = nil
     
     // Services
     private let locationSearcher = MKLocalSearchCompleter()
@@ -117,6 +119,8 @@ class OnboardingViewModel: ObservableObject {
                 Task { @MainActor in
                     self?.birthLatitude = location.coordinate.latitude
                     self?.birthLongitude = location.coordinate.longitude
+                    self?.birthCityName = placemark.locality ?? placemark.administrativeArea
+                    self?.birthCountryCode = placemark.isoCountryCode
                 }
             }
         }
@@ -142,7 +146,9 @@ class OnboardingViewModel: ObservableObject {
                 birthDate: birthDate,
                 birthTime: knowsBirthTime ? birthTime : nil,
                 latitude: birthLatitude,
-                longitude: birthLongitude
+                longitude: birthLongitude,
+                cityName: birthCityName,
+                countryCode: birthCountryCode
             )
             
             // Phase 3-6: Show progress through each system

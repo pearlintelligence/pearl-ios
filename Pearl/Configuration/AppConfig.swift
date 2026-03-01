@@ -30,6 +30,16 @@ enum AppConfig {
         ProcessInfo.processInfo.environment["ANTHROPIC_API_KEY"] ?? ""
     }
     
+    static var astrologyAPIKey: String {
+        // Astrology-API.io — Swiss Ephemeris calculations
+        // Get a key at https://dashboard.astrology-api.io
+        ProcessInfo.processInfo.environment["ASTROLOGY_API_KEY"] ?? ""
+    }
+    
+    static var astrologyAPIBaseURL: String {
+        "https://api.astrology-api.io/api/v3"
+    }
+    
     static var anthropicModel: String {
         "claude-sonnet-4-20250514" // or claude-3-5-haiku for faster responses
     }

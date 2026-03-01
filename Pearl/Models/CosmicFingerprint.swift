@@ -82,15 +82,19 @@ class CosmicFingerprintBuilder {
         birthDate: Date,
         birthTime: Date?,
         latitude: Double,
-        longitude: Double
+        longitude: Double,
+        cityName: String? = nil,
+        countryCode: String? = nil
     ) async throws -> CosmicFingerprint {
         
-        // 1. Astrology
+        // 1. Astrology (Swiss Ephemeris via API when available)
         let natalChart = try await astrologyService.calculateNatalChart(
             date: birthDate,
             time: birthTime,
             latitude: latitude,
-            longitude: longitude
+            longitude: longitude,
+            cityName: cityName,
+            countryCode: countryCode
         )
         
         let astrology = AstrologySnapshot(
