@@ -99,8 +99,23 @@ fastlane beta
 
 | Workflow | Trigger | What it does |
 |----------|---------|--------------|
+| `ci.yml` | PR + push to main | Full build verification with XcodeGen |
 | `test.yml` | PR + push to main | Runs unit tests + UI tests |
 | `deploy-testflight.yml` | Push to main + manual | Builds, signs, uploads to TestFlight |
+
+## Adding the CI Workflow
+
+A recommended build-verification workflow is included as `ci.yml.recommended` in the repo root.
+
+The GitHub App cannot create workflow files directly — this must be done manually:
+
+```bash
+mkdir -p .github/workflows
+cp ci.yml.recommended .github/workflows/ci.yml
+git add .github/workflows/ci.yml
+git commit -m "ci: add build verification workflow"
+git push
+```
 
 ## Manual Deploy
 
