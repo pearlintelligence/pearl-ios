@@ -50,9 +50,10 @@ enum AppConfig {
     // MARK: - Sentry (Crash Reporting)
     
     static var sentryDSN: String {
-        // Set in environment or replace with your project DSN
-        // Get DSN from https://sentry.io → Project → Settings → Client Keys
-        ProcessInfo.processInfo.environment["SENTRY_DSN"] ?? ""
+        // DSN is safe to embed — it only allows sending events, not reading them.
+        // Falls back to environment variable for local development overrides.
+        ProcessInfo.processInfo.environment["SENTRY_DSN"]
+            ?? "https://898637e3f757a5919fd2c8d07df22dd6@o4510967681646592.ingest.us.sentry.io/4510967689969664"
     }
     
     static var isDebug: Bool {
