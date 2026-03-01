@@ -72,7 +72,7 @@ struct LifePurposeView: View {
                 .textCase(.uppercase)
             
             Text("\(userName), this is why you're here.")
-                .font(PearlFonts.oracleRegular(24))
+                .font(PearlFonts.oracle(24))
                 .foregroundColor(PearlColors.textPrimary)
                 .multilineTextAlignment(.center)
         }

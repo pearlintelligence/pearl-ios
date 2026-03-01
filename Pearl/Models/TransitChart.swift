@@ -180,21 +180,9 @@ class TransitChartCalculator {
         )
     }
     
-    /// Get current planetary positions via API or local calculation
+    /// Get current planetary positions via local calculation
+    /// (Ecliptic positions don't depend on observer location)
     private func getCurrentPositions() async throws -> [TransitPosition] {
-        // Try API first
-        if let apiPositions = try? await astrologyService.fetchCurrentTransits() {
-            return apiPositions.map { pos in
-                TransitPosition(
-                    planet: pos.planet,
-                    sign: pos.sign,
-                    degree: pos.degree,
-                    isRetrograde: pos.isRetrograde
-                )
-            }
-        }
-        
-        // Fallback: use local calculation for current date
         let now = Date()
         let natalData = try await astrologyService.calculateNatalChart(
             date: now,

@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 @main
 struct PearlApp: App {
@@ -14,6 +15,12 @@ struct PearlApp: App {
                 .environmentObject(pearlEngine)
                 .preferredColorScheme(.dark)
         }
+        .modelContainer(for: [
+            UserProfile.self,
+            Conversation.self,
+            ChatMessage.self,
+            WeeklyInsight.self
+        ])
     }
 }
 
