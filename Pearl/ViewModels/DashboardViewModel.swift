@@ -63,7 +63,6 @@ class DashboardViewModel: ObservableObject {
                 HD Type: \(fp.humanDesign.type.rawValue)
                 Strategy: \(fp.humanDesign.strategy)
                 Authority: \(fp.humanDesign.authority)
-                Gene Key Life Work: \(fp.geneKeys.lifeWork.number) - Gift: \(fp.geneKeys.lifeWork.gift)
                 Soul Correction: \(fp.kabbalah.soulCorrection.name)
                 Life Path: \(fp.numerology.lifePath.value)
                 Personal Year: \(fp.numerology.personalYear)

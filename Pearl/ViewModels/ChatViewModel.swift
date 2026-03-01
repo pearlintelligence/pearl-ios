@@ -85,8 +85,6 @@ class ChatViewModel: ObservableObject {
             HD Strategy: \(fp.humanDesign.strategy)
             HD Authority: \(fp.humanDesign.authority)
             HD Profile: \(fp.humanDesign.profile)
-            Gene Key Life Work: Key \(fp.geneKeys.lifeWork.number) — Shadow: \(fp.geneKeys.lifeWork.shadow), Gift: \(fp.geneKeys.lifeWork.gift), Siddhi: \(fp.geneKeys.lifeWork.siddhi)
-            Gene Key Evolution: Key \(fp.geneKeys.evolution.number) — Gift: \(fp.geneKeys.evolution.gift)
             Soul Correction: #\(fp.kabbalah.soulCorrection.number) \(fp.kabbalah.soulCorrection.name)
             Birth Sephirah: \(fp.kabbalah.birthSephirah.name) (\(fp.kabbalah.birthSephirah.meaning))
             Life Path: \(fp.numerology.lifePath.value)

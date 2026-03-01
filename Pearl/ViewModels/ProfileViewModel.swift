@@ -50,7 +50,7 @@ class ProfileViewModel: ObservableObject {
     }
     
     func sharePearl() {
-        let text = "I discovered my cosmic fingerprint with Pearl — an AI oracle that reads your astrology, human design, gene keys, kabbalah, and numerology in one unified portrait. ✦"
+        let text = "I discovered my cosmic fingerprint with Pearl — an AI oracle that reads your astrology, human design, kabbalah, and numerology in one unified portrait. ✦"
         let url = URL(string: "https://innerpearl.ai")!
         
         let activityController = UIActivityViewController(

@@ -8,7 +8,7 @@ struct DashboardView: View {
     @State private var expandedSection: DashboardSection? = nil
     
     enum DashboardSection: String {
-        case astrology, humanDesign, geneKeys, kabbalah, numerology
+        case astrology, humanDesign, kabbalah, numerology
     }
     
     var body: some View {
@@ -190,10 +190,7 @@ struct DashboardView: View {
             // 2. Human Design
             humanDesignCard
             
-            // 3. Gene Keys
-            geneKeysCard
-            
-            // 4. Kabbalah
+            // 3. Kabbalah
             kabbalahCard
             
             // 5. Numerology
@@ -324,35 +321,7 @@ struct DashboardView: View {
         }
     }
     
-    // MARK: - 3. Gene Keys Card
-    
-    private var geneKeysCard: some View {
-        SystemCard(
-            title: "Gene Keys",
-            symbol: "🧬",
-            color: PearlColors.nebula,
-            isExpanded: expandedSection == .geneKeys,
-            onTap: { toggleSection(.geneKeys) }
-        ) {
-            if let gk = viewModel.fingerprint?.geneKeys {
-                VStack(alignment: .leading, spacing: 16) {
-                    GeneKeyRow(label: "Life's Work", key: gk.lifeWork)
-                    Divider().background(PearlColors.surface)
-                    GeneKeyRow(label: "Evolution", key: gk.evolution)
-                    Divider().background(PearlColors.surface)
-                    GeneKeyRow(label: "Radiance", key: gk.radiance)
-                    Divider().background(PearlColors.surface)
-                    GeneKeyRow(label: "Purpose", key: gk.purpose)
-                }
-            } else {
-                Text("Complete your cosmic fingerprint to unlock Gene Keys")
-                    .font(PearlFonts.body(14))
-                    .foregroundColor(PearlColors.textMuted)
-            }
-        }
-    }
-    
-    // MARK: - 4. Kabbalah Card
+    // MARK: - 3. Kabbalah Card
     
     private var kabbalahCard: some View {
         SystemCard(
@@ -540,63 +509,6 @@ struct SystemCard<Content: View>: View {
                         )
                 )
         )
-    }
-}
-
-// MARK: - Gene Key Row
-
-struct GeneKeyRow: View {
-    let label: String
-    let key: GeneKeysService.GeneKey
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(label)
-                    .font(PearlFonts.labelText)
-                    .foregroundColor(PearlColors.textMuted)
-                Spacer()
-                Text("Key \(key.number)")
-                    .font(PearlFonts.bodyMedium(13))
-                    .foregroundColor(PearlColors.gold)
-            }
-            
-            // Shadow → Gift → Siddhi
-            HStack(spacing: 4) {
-                GeneKeyStage(label: "Shadow", value: key.shadow, color: PearlColors.textMuted)
-                Text("→")
-                    .font(PearlFonts.body(12))
-                    .foregroundColor(PearlColors.textMuted)
-                GeneKeyStage(label: "Gift", value: key.gift, color: PearlColors.goldLight)
-                Text("→")
-                    .font(PearlFonts.body(12))
-                    .foregroundColor(PearlColors.textMuted)
-                GeneKeyStage(label: "Siddhi", value: key.siddhi, color: PearlColors.gold)
-            }
-            
-            Text(key.theme)
-                .font(PearlFonts.pearlWhisper)
-                .foregroundColor(PearlColors.textSecondary)
-                .lineSpacing(3)
-        }
-    }
-}
-
-struct GeneKeyStage: View {
-    let label: String
-    let value: String
-    let color: Color
-    
-    var body: some View {
-        VStack(spacing: 2) {
-            Text(value)
-                .font(PearlFonts.bodyMedium(12))
-                .foregroundColor(color)
-            Text(label)
-                .font(PearlFonts.body(9))
-                .foregroundColor(PearlColors.textMuted)
-        }
-        .frame(maxWidth: .infinity)
     }
 }
 

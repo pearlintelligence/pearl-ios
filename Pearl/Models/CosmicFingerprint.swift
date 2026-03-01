@@ -1,32 +1,31 @@
 import Foundation
 
-// MARK: - Five-System Cosmic Fingerprint
-// Unified model encompassing all five wisdom traditions
+// MARK: - Cosmic Fingerprint
+// Unified model encompassing four wisdom traditions + Life Purpose Engine
+// v1 systems: Astrology (core) + Human Design + Kabbalah + Numerology
+// Life Purpose Engine (astrology-based) is the primary interpretation layer.
 
 struct CosmicFingerprint: Codable, Identifiable {
     let id: UUID
     let userId: UUID
     let generatedAt: Date
     
-    // 1. Western Astrology
+    // 1. Western Astrology (core)
     let astrology: AstrologySnapshot
     
     // 2. Human Design
     let humanDesign: HumanDesignProfile
     
-    // 3. Gene Keys
-    let geneKeys: GeneKeysService.GeneKeyProfile
-    
-    // 4. Kabbalah
+    // 3. Kabbalah
     let kabbalah: KabbalahService.KabbalahProfile
     
-    // 5. Numerology
+    // 4. Numerology
     let numerology: NumerologyService.FullNumerologyProfile
     
     // Life Purpose (CORE — generated immediately after natal chart)
     let lifePurpose: LifePurposeEngine.LifePurposeProfile?
     
-    // Pearl's synthesis of all five systems
+    // Pearl's synthesis of all systems
     let synthesis: PearlSynthesis
 }
 
@@ -77,7 +76,6 @@ struct MorningCosmicBrief: Codable, Identifiable {
 class CosmicFingerprintBuilder {
     private let astrologyService = AstrologyService()
     private let humanDesignService = HumanDesignService()
-    private let geneKeysService = GeneKeysService()
     private let kabbalahService = KabbalahService()
     private let numerologyService = NumerologyService()
     
@@ -139,42 +137,43 @@ class CosmicFingerprintBuilder {
             undefinedCenters: hdCalc.undefinedCenters
         )
         
-        // 3. Gene Keys
-        let geneKeys = geneKeysService.calculateProfile(
-            birthDate: birthDate,
-            birthTime: birthTime
-        )
-        
-        // 4. Kabbalah
+        // 3. Kabbalah
         let kabbalah = kabbalahService.calculateProfile(
             birthDate: birthDate,
             name: name
         )
         
-        // 5. Numerology
+        // 4. Numerology
         let numerology = numerologyService.calculateProfile(
             birthDate: birthDate,
             fullName: name
         )
         
-        // Pearl's synthesis
+        // Pearl's synthesis (astrology-based interpretation layer)
         let synthesis = PearlSynthesis(
             lifePurpose: synthesizeLifePurpose(
                 astrology: astrology,
                 humanDesign: humanDesign,
-                geneKeys: geneKeys,
                 numerology: numerology
             ),
             coreThemes: synthesizeCoreThemes(
                 astrology: astrology,
                 humanDesign: humanDesign,
-                geneKeys: geneKeys,
                 kabbalah: kabbalah,
                 numerology: numerology
             ),
-            superpower: synthesizeSuperpower(humanDesign: humanDesign, geneKeys: geneKeys),
-            shadow: synthesizeShadow(geneKeys: geneKeys, kabbalah: kabbalah),
-            invitation: synthesizeInvitation(humanDesign: humanDesign, numerology: numerology),
+            superpower: synthesizeSuperpower(
+                astrology: astrology,
+                humanDesign: humanDesign
+            ),
+            shadow: synthesizeShadow(
+                astrology: astrology,
+                kabbalah: kabbalah
+            ),
+            invitation: synthesizeInvitation(
+                humanDesign: humanDesign,
+                numerology: numerology
+            ),
             pearlSummary: ""  // Will be enriched by PearlEngine
         )
         
@@ -184,7 +183,6 @@ class CosmicFingerprintBuilder {
             generatedAt: Date(),
             astrology: astrology,
             humanDesign: humanDesign,
-            geneKeys: geneKeys,
             kabbalah: kabbalah,
             numerology: numerology,
             lifePurpose: lifePurpose,
@@ -193,49 +191,60 @@ class CosmicFingerprintBuilder {
     }
     
     // MARK: - Synthesis Helpers
+    // Pearl's own interpretation layer — no proprietary systems
     
     private func synthesizeLifePurpose(
         astrology: AstrologySnapshot,
         humanDesign: HumanDesignProfile,
-        geneKeys: GeneKeysService.GeneKeyProfile,
         numerology: NumerologyService.FullNumerologyProfile
     ) -> String {
         let sun = astrology.sunSign.displayName
         let hdType = humanDesign.type.rawValue
-        let lifeWorkGift = geneKeys.lifeWork.gift
         let lifePath = numerology.lifePath.value
+        let moon = astrology.moonSign.displayName
         
-        return "As a \(sun) Sun and \(hdType), your life purpose weaves together the gift of \(lifeWorkGift) with a Life Path \(lifePath) calling. You are designed to \(humanDesign.strategy.lowercased()) and let your authority guide you home."
+        return "As a \(sun) Sun with a \(moon) Moon and \(hdType) design, your life purpose flows through a Life Path \(lifePath) calling. You are designed to \(humanDesign.strategy.lowercased()) and let your inner authority guide you home."
     }
     
     private func synthesizeCoreThemes(
         astrology: AstrologySnapshot,
         humanDesign: HumanDesignProfile,
-        geneKeys: GeneKeysService.GeneKeyProfile,
         kabbalah: KabbalahService.KabbalahProfile,
         numerology: NumerologyService.FullNumerologyProfile
     ) -> [String] {
-        [
+        var themes: [String] = [
             "\(astrology.sunSign.displayName) essence: \(astrology.sunSign.element.rawValue.capitalized) energy",
             "\(humanDesign.type.rawValue): \(humanDesign.strategy)",
-            "Life Work gift: \(geneKeys.lifeWork.gift)",
             "Soul correction: \(kabbalah.soulCorrection.name)",
             "Life Path \(numerology.lifePath.value): \(numerology.lifePath.keywords.first ?? "")"
         ]
+        
+        if let rising = astrology.risingSign {
+            themes.insert("\(rising.displayName) Rising: how the world sees you", at: 1)
+        }
+        
+        if let mc = astrology.midheavenSign {
+            themes.append("MC in \(mc.displayName): your public calling")
+        }
+        
+        return themes
     }
     
     private func synthesizeSuperpower(
-        humanDesign: HumanDesignProfile,
-        geneKeys: GeneKeysService.GeneKeyProfile
+        astrology: AstrologySnapshot,
+        humanDesign: HumanDesignProfile
     ) -> String {
-        "Your superpower lives at the intersection of your \(humanDesign.type.rawValue) energy and your Gene Key gift of \(geneKeys.lifeWork.gift). When you \(humanDesign.strategy.lowercased()), this gift naturally radiates."
+        let element = astrology.sunSign.element.rawValue.lowercased()
+        return "Your superpower lives at the intersection of your \(humanDesign.type.rawValue) energy and your \(astrology.sunSign.displayName) \(element) nature. When you \(humanDesign.strategy.lowercased()), your gifts naturally radiate."
     }
     
     private func synthesizeShadow(
-        geneKeys: GeneKeysService.GeneKeyProfile,
+        astrology: AstrologySnapshot,
         kabbalah: KabbalahService.KabbalahProfile
     ) -> String {
-        "Your shadow pattern of \(geneKeys.lifeWork.shadow) connects to your Kabbalistic challenge of \(kabbalah.soulCorrection.challenge.lowercased()). This is not something to fix — it is the raw material of your transformation."
+        let saturn = astrology.planetaryPositions.first(where: { $0.planet == .saturn })
+        let saturnDesc = saturn.map { "Saturn in \($0.sign.displayName) challenges you to master \($0.sign.displayName.lowercased()) lessons" } ?? "Your Saturn placement teaches patience"
+        return "\(saturnDesc), connecting to your Kabbalistic challenge of \(kabbalah.soulCorrection.challenge.lowercased()). This is not something to fix — it is the raw material of your transformation."
     }
     
     private func synthesizeInvitation(

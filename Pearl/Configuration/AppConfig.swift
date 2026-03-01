@@ -64,7 +64,7 @@ enum AppConfig {
     
     static var enableHumanDesign: Bool { true }
     static var enableNumerology: Bool { true }
-    static var enableGeneKeys: Bool { true }  // Enabled for P0
+    static var enableGeneKeys: Bool { false }  // Removed from v1 — proprietary
     static var enableKabbalah: Bool { true }   // Enabled for P0
     
     // MARK: - Premium

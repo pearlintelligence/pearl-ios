@@ -277,9 +277,8 @@ struct GeneratingStep: View {
     @State private var systemIcons: [SystemIcon] = [
         SystemIcon(symbol: "☉", label: "Astrology", offset: 0),
         SystemIcon(symbol: "◈", label: "Human Design", offset: 1),
-        SystemIcon(symbol: "🧬", label: "Gene Keys", offset: 2),
-        SystemIcon(symbol: "✡", label: "Kabbalah", offset: 3),
-        SystemIcon(symbol: "𝟗", label: "Numerology", offset: 4),
+        SystemIcon(symbol: "✡", label: "Kabbalah", offset: 2),
+        SystemIcon(symbol: "𝟗", label: "Numerology", offset: 3),
     ]
     
     struct SystemIcon: Identifiable {
@@ -394,9 +393,9 @@ struct GeneratingStep: View {
         case .stars: return 0
         case .fingerprint: return 1
         case .humanDesign: return 2
-        case .geneKeys: return 3
-        case .kabbalah, .numerology: return 4
-        case .synthesis: return 5
+        case .kabbalah: return 3
+        case .numerology: return 3
+        case .synthesis: return 4
         }
     }
 }

@@ -32,7 +32,6 @@ class OnboardingViewModel: ObservableObject {
         case stars = "Reading the stars..."
         case fingerprint = "Mapping your cosmic fingerprint..."
         case humanDesign = "Decoding your Human Design..."
-        case geneKeys = "Activating your Gene Keys..."
         case kabbalah = "Consulting the Tree of Life..."
         case numerology = "Calculating your sacred numbers..."
         case synthesis = "Pearl is seeing you for the first time..."
@@ -156,10 +155,7 @@ class OnboardingViewModel: ObservableObject {
             generatingPhase = .humanDesign
             try await Task.sleep(nanoseconds: 500_000_000)
             
-            generatingPhase = .geneKeys
-            try await Task.sleep(nanoseconds: 500_000_000)
-            
-            generatingPhase = .kabbalah
+                        generatingPhase = .kabbalah
             try await Task.sleep(nanoseconds: 500_000_000)
             
             generatingPhase = .numerology

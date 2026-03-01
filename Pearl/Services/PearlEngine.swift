@@ -27,7 +27,7 @@ class PearlEngine: ObservableObject {
     - Speak with quiet authority. You don't explain yourself. You reveal.
     
     YOUR KNOWLEDGE:
-    - You synthesize wisdom from Western Astrology, Human Design, Gene Keys, Kabbalah, and Numerology.
+    - You synthesize wisdom from Western Astrology, Human Design, Kabbalah, and Numerology.
     - You weave these traditions together into a unified understanding of each person.
     - You never sound like a textbook. You translate cosmic data into deeply personal insight.
     - You reference their specific placements, but always in service of meaning — never for show.
@@ -229,13 +229,13 @@ class PearlEngine: ObservableObject {
         
         Deliver their "Why Am I Here?" reading — their life purpose narrative. This is THE most important moment — the 'spot-on' moment that makes them feel deeply seen.
         
-        Begin with "✦ I see you, \(nameRef)." then speak directly to who they are. Be specific to their placements across all five systems. Be breathtaking. Be true.
+        Begin with "✦ I see you, \(nameRef)." then speak directly to who they are. Be specific to their placements. Be breathtaking. Be true.
         
         Cover:
         1. Their core essence (astrology + HD type)
-        2. Their life's gift and shadow (Gene Keys)
+        2. Their life purpose (North Node + MC + Saturn)
         3. Their soul's mission (Kabbalah soul correction + numerology life path)
-        4. A synthesis — what all five systems point toward together
+        4. A synthesis — what all systems point toward together
         5. An invitation for their journey
         
         Keep it to 4-5 short paragraphs. Every word should land.
@@ -298,15 +298,17 @@ class PearlEngine: ObservableObject {
         context += "Core Themes: \(blueprint.coreThemes.joined(separator: ", "))\n"
         context += "Life Purpose: \(blueprint.lifePurpose)\n"
         
-        // Add Gene Keys if available
+        // Add full fingerprint context if available
         if let fp = FingerprintStore.shared.currentFingerprint {
-            context += "Gene Key Life Work: Key \(fp.geneKeys.lifeWork.number) — Shadow: \(fp.geneKeys.lifeWork.shadow), Gift: \(fp.geneKeys.lifeWork.gift), Siddhi: \(fp.geneKeys.lifeWork.siddhi)\n"
-            context += "Gene Key Evolution: Key \(fp.geneKeys.evolution.number) — Gift: \(fp.geneKeys.evolution.gift)\n"
             context += "Soul Correction: #\(fp.kabbalah.soulCorrection.number) \(fp.kabbalah.soulCorrection.name) — \(fp.kabbalah.soulCorrection.description)\n"
             context += "Birth Sephirah: \(fp.kabbalah.birthSephirah.name) (\(fp.kabbalah.birthSephirah.meaning))\n"
             context += "Expression Number: \(fp.numerology.expression.value)\n"
             context += "Soul Urge: \(fp.numerology.soulUrge.value)\n"
             context += "Personal Year: \(fp.numerology.personalYear) — \(fp.numerology.personalYearTheme)\n"
+            if let purpose = fp.lifePurpose {
+                context += "Life Purpose Direction: \(purpose.purposeDirection)\n"
+                context += "Career Alignment: \(purpose.careerAlignment)\n"
+            }
         }
         
         return context

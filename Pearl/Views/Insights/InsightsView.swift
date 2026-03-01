@@ -315,7 +315,6 @@ class InsightsViewModel: ObservableObject {
                 Name: \(name)
                 Sun: \(fp.astrology.sunSign.displayName), Moon: \(fp.astrology.moonSign.displayName)
                 HD Type: \(fp.humanDesign.type.rawValue), Strategy: \(fp.humanDesign.strategy)
-                Gene Key Life Work: \(fp.geneKeys.lifeWork.gift)
                 Soul Correction: \(fp.kabbalah.soulCorrection.name)
                 Life Path: \(fp.numerology.lifePath.value)
                 Personal Year: \(fp.numerology.personalYear)
