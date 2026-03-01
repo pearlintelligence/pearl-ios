@@ -21,6 +21,11 @@ configs:
   Debug: debug
   Release: release
 
+packages:
+  Sentry:
+    url: https://github.com/getsentry/sentry-cocoa
+    from: "8.0.0"
+
 targets:
   Pearl:
     type: application
@@ -28,6 +33,9 @@ targets:
     deploymentTarget: "17.0"
     sources:
       - Pearl
+    dependencies:
+      - package: Sentry
+        product: Sentry
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.innerpearl.pearl
@@ -49,13 +57,54 @@ targets:
         Release:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: ""
 
+  PearlTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - PearlTests
+    dependencies:
+      - target: Pearl
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.innerpearl.pearl.tests
+        GENERATE_INFOPLIST_FILE: YES
+
+  PearlUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - PearlUITests
+    dependencies:
+      - target: Pearl
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.innerpearl.pearl.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: Pearl
+
 schemes:
   Pearl:
     build:
       targets:
         Pearl: all
+        PearlTests: [test]
+        PearlUITests: [test]
     run:
       config: Debug
+      environmentVariables:
+        - variable: ANTHROPIC_API_KEY
+          value: ""
+          isEnabled: true
+        - variable: SENTRY_DSN
+          value: ""
+          isEnabled: true
+    test:
+      config: Debug
+      targets:
+        - PearlTests
+        - PearlUITests
       environmentVariables:
         - variable: ANTHROPIC_API_KEY
           value: ""

@@ -7,6 +7,11 @@ struct PearlApp: App {
     @StateObject private var authService = AuthService()
     @StateObject private var pearlEngine = PearlEngine()
     
+    init() {
+        // Initialize crash reporting (Sentry)
+        CrashReporting.start()
+    }
+    
     var body: some Scene {
         WindowGroup {
             RootView()

@@ -47,6 +47,30 @@ enum AppConfig {
     // Alias for convenience
     static var claudeModel: String { anthropicModel }
     
+    // MARK: - Sentry (Crash Reporting)
+    
+    static var sentryDSN: String {
+        // Set in environment or replace with your project DSN
+        // Get DSN from https://sentry.io → Project → Settings → Client Keys
+        ProcessInfo.processInfo.environment["SENTRY_DSN"] ?? ""
+    }
+    
+    static var isDebug: Bool {
+        #if DEBUG
+        return true
+        #else
+        return false
+        #endif
+    }
+    
+    static var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+    }
+    
+    static var buildNumber: String {
+        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+    }
+    
     // MARK: - API Endpoints
     
     static var anthropicBaseURL: String {
